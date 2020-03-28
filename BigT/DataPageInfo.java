@@ -70,17 +70,17 @@ class DataPageInfo implements GlobalConst{
    *  it will make a copy of the data in the tuple
    * @param atuple: the input tuple
    */
-  public DataPageInfo(Map _atuple) throws IOException
+  public DataPageInfo(Map _amap) throws IOException
   {   
-     // need check _atuple size == this.size ?otherwise, throw new exception
-     if (_atuple.size("di")!=12){
+     // need check _atuple size == this.size ?otherwise, throw new exception 
+     if (_amap.size("di")!=12){
       // throw new (null, "HEAPFILE: TUPLE SIZE ERROR");
-    }
+    } 
 
     else{
-      data = _atuple.getMapByteArray("di");
+      data = _amap.getMapByteArray("di");
       // System.out.println("DPINFO: "+ _atuple.getMapOffset());
-      offset = _atuple.getMapOffset();
+      offset = _amap.getMapOffset();
   
       availspace = ConvertMap.getIntValue(offset, data);
       recct = ConvertMap.getIntValue(offset+4, data);

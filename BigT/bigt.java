@@ -38,7 +38,7 @@ public class bigt implements Filetype, GlobalConst {
     private static int tempfilecount = 0;
 
 
-    public bigt(String name, int type) throws HFDiskMgrException, HFBufMgrException, HFException, IOException {
+    public bigt(String name) throws HFDiskMgrException, HFBufMgrException, HFException, IOException {
         _file_deleted = true;
         _fileName = null;
         

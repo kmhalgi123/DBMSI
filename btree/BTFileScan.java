@@ -14,7 +14,7 @@ import BigT.*;
  * index files (class BTreeFile).  It derives from abstract base
  * class IndexFileScan.  
  */
-public class BTFileScan  extends IndexFileScan
+public class BTFileScan  extends IndexFileScan 
              implements  GlobalConst
 {
 
