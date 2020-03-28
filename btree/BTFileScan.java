@@ -44,7 +44,7 @@ public class BTFileScan  extends IndexFileScan
   public KeyDataEntry get_next() 
     throws ScanIteratorException
     {
-
+ 
     KeyDataEntry entry;
     PageId nextpage;
     try {

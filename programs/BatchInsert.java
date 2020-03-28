@@ -21,9 +21,9 @@ public class BatchInsert {
     static bigt f = null;
     String dbFileName = "project2_testdata.csv";
 
-    // batchinsert project2_testdata.csv 2 bigtable2
+    // batchinsert project2_testdata.csv 5 bigtable2
+    // query bigtable2 5 0 Alaska Baboon 67 100
     // query bigtable2 2 0 Singapore Camel 9300 100
-    // query bigtable2 2 0 Singapore * * 100
     // query bigtable2 2 0 * Lion * 100
     // java programs.BatchInsert 
 
@@ -433,7 +433,7 @@ public class BatchInsert {
                     }
                     if (type == 5) {
                         String key1 = map.getRowLabel();
-                        String key2 = map.getColumnLabel();
+                        String key2 = map.getValue();
                         String key = key1 + key2;
                         int keyt = map.getTimeStamp();
                         btf.insert(new StringKey(key), k);
@@ -539,8 +539,8 @@ public class BatchInsert {
             attrSize[0] = 15;
             attrSize[1] = 15;
             attrSize[2] = 4;
-            attrSize[3] = 15;
-
+            attrSize[3] = 15; 
+            select[1] = null;
             IndexScan indexScan = null;
 
             Map m = null, m1 = null;
@@ -597,6 +597,8 @@ public class BatchInsert {
             attrSize[1] = 15;
             attrSize[2] = 4;
             attrSize[3] = 15;
+            select[0] = select[1];
+            select[1] = null;
 
             IndexScan indexScan = null;
 
@@ -652,9 +654,14 @@ public class BatchInsert {
             attrSize[1] = 15;
             attrSize[2] = 4;
             attrSize[3] = 15;
-
+            
+            select[0].operand2.string += select[1].operand2.string;
+            
+            select[1] = null;
             IndexScan indexScan1 = null;
             IndexScan indexScan2 = null;
+
+
 
             Map m = null, m1 = null;
             try {
@@ -665,65 +672,72 @@ public class BatchInsert {
                 indexScan1 = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), Bigtablename, "Adithya", attrType,
                         attrSize, 4, 4, proj_list, select, 1, false);
                 
-                indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
-                    attrSize, 4, 4, proj_list, select, 1, false);
+
+
+                  // Indexscan 1
+                  m = indexScan1.get_next();
+                  m.mapSetup();
+                  m.print();
+  
+                  m1 = new Map(m);
+                  m1.mapSetup();
+  
+                 while (m != null ) {
+                  m = indexScan1.get_next();
+                  m.mapSetup();
+  
+                      if(MapUtils.Equal(m, m1)){
+                          break;
+                      }
+                      m.print();
+  
+                      m1 = new Map(m);
+                      m1.mapSetup();
+                      
+                      //m1.print();
+                  }
+                  try {
+                      indexScan1.close();
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                  }
+
+                  // Indexscan 2
+
+            //       select[0] = select[2];
+            //       select[2] = null;
+            //     indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
+            //         attrSize, 4, 4, proj_list, select, 1, false);
                                 
            
-                // Indexscan 1
-                m = indexScan1.get_next();
-                m.mapSetup();
-                m.print();
+            
+            //     
+            //     m = indexScan2.get_next();
+            //     m.mapSetup();
+            //     m.print();
 
-                m1 = new Map(m);
-                m1.mapSetup();
+            //     m1 = new Map(m);
+            //     m1.mapSetup();
 
-               while (m != null ) {
-                m = indexScan1.get_next();
-                m.mapSetup();
+            //    while (m != null ) {
+            //     m = indexScan2.get_next();
+            //     m.mapSetup();
 
-                    if(MapUtils.Equal(m, m1)){
-                        break;
-                    }
-                    m.print();
+            //         if(MapUtils.Equal(m, m1)){
+            //             break;
+            //         }
+            //         m.print();
 
-                    m1 = new Map(m);
-                    m1.mapSetup();
+            //         m1 = new Map(m);
+            //         m1.mapSetup();
                     
-                    //m1.print();
-                }
-                try {
-                    indexScan1.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // Indexscan 2
-                m = indexScan2.get_next();
-                m.mapSetup();
-                m.print();
-
-                m1 = new Map(m);
-                m1.mapSetup();
-
-               while (m != null ) {
-                m = indexScan2.get_next();
-                m.mapSetup();
-
-                    if(MapUtils.Equal(m, m1)){
-                        break;
-                    }
-                    m.print();
-
-                    m1 = new Map(m);
-                    m1.mapSetup();
-                    
-                    //m1.print();
-                }
-                try {
-                    indexScan2.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            //         //m1.print();
+            //     }
+            //     try {
+            //         indexScan2.close();
+            //     } catch (Exception e) {
+            //         e.printStackTrace();
+            //     }
 
 
             } catch (Exception e) {
@@ -743,6 +757,8 @@ public class BatchInsert {
             attrSize[2] = 4;
             attrSize[3] = 15;
 
+            select[0].operand2.string += select[2].operand2.string;
+            select[1] = null;
             IndexScan indexScan1 = null;
             IndexScan indexScan2 = null;
 
@@ -753,8 +769,8 @@ public class BatchInsert {
                 indexScan1 = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), Bigtablename, "Adithya", attrType,
                 attrSize, 4, 4, proj_list, select, 1, false);
         
-                 indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
-            attrSize, 4, 4, proj_list, select, 1, false);
+            //      indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
+            // attrSize, 4, 4, proj_list, select, 1, false);
         
 
                 // Indexscan 1
@@ -785,33 +801,33 @@ public class BatchInsert {
                     e.printStackTrace();
                 }
 
-                // Indexscan 2 
-                m = indexScan2.get_next();
-                m.mapSetup();
-                m.print();
+            //     // Indexscan 2 
+            //     m = indexScan2.get_next();
+            //     m.mapSetup();
+            //     m.print();
 
-                m1 = new Map(m);
-                m1.mapSetup();
+            //     m1 = new Map(m);
+            //     m1.mapSetup();
 
-               while (m != null ) {
-                m = indexScan2.get_next();
-                m.mapSetup();
+            //    while (m != null ) {
+            //     m = indexScan2.get_next();
+            //     m.mapSetup();
 
-                    if(MapUtils.Equal(m, m1)){
-                        break;
-                    }
-                    m.print();
+            //         if(MapUtils.Equal(m, m1)){
+            //             break;
+            //         }
+            //         m.print();
 
-                    m1 = new Map(m);
-                    m1.mapSetup();
+            //         m1 = new Map(m);
+            //         m1.mapSetup();
                     
-                    //m1.print();
-                }
-                try {
-                    indexScan2.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            //         //m1.print();
+            //     }
+            //     try {
+            //         indexScan2.close();
+            //     } catch (Exception e) {
+            //         e.printStackTrace();
+            //     }
 
                 
 
