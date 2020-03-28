@@ -1,5 +1,7 @@
 package global;
 
+import java.sql.Time;
+
 /** 
  * Enumeration class for IndexType
  * 
@@ -44,10 +46,13 @@ public class IndexType {
       return "Row Label Index";
     case Column_Label_Index:
       return "Column Label Index";
-    case Column_Row_Label_Timestamp_Index:
-      return "Column and Row Label Index Followed by Timestamp Index";
-    case Row_Label_Value_Timestamp_Index:
-      return "Row Label and Value Index Followed by Timestamp Index";
+    case Column_Row_Label_Index:
+      return "Column and Row Label Index";
+    case Row_Label_Value_Index:
+      return "Row Label and Value Index";
+    case Timestamp_Index:
+      return "Timestamp Index";
+      
     }
     return ("Unexpected IndexType " + indexType);
   }

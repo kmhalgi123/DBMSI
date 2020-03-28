@@ -21,10 +21,11 @@ public class BatchInsert {
     static bigt f = null;
     String dbFileName = "project2_testdata.csv";
 
-    // batchinsert /home/user/Desktop/project2_testdata.csv 2 bigtable2
+    // batchinsert project2_testdata.csv 2 bigtable2
     // query bigtable2 2 0 Singapore Camel 9300 100
     // query bigtable2 2 0 Singapore * * 100
     // query bigtable2 2 0 * Lion * 100
+    // java programs.BatchInsert 
 
     public static void main(String[] args) {
 
@@ -652,20 +653,24 @@ public class BatchInsert {
             attrSize[2] = 4;
             attrSize[3] = 15;
 
-            IndexScan indexScan = null;
             IndexScan indexScan1 = null;
+            IndexScan indexScan2 = null;
 
             Map m = null, m1 = null;
             try {
-                indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), Bigtablename, "Adithya", attrType,
+                // Query is for equality search for eg "Monaco is String and Crow is String"
+                // not work for Range Search and "*"
+                // will have to use separator
+
+                indexScan1 = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), Bigtablename, "Adithya", attrType,
                         attrSize, 4, 4, proj_list, select, 1, false);
                 
-                indexScan1 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
+                indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
                     attrSize, 4, 4, proj_list, select, 1, false);
                                 
            
-
-                m = indexScan.get_next();
+                // Indexscan 1
+                m = indexScan1.get_next();
                 m.mapSetup();
                 m.print();
 
@@ -673,7 +678,7 @@ public class BatchInsert {
                 m1.mapSetup();
 
                while (m != null ) {
-                m = indexScan.get_next();
+                m = indexScan1.get_next();
                 m.mapSetup();
 
                     if(MapUtils.Equal(m, m1)){
@@ -687,11 +692,39 @@ public class BatchInsert {
                     //m1.print();
                 }
                 try {
-                    indexScan.close();
+                    indexScan1.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                
+
+                // Indexscan 2
+                m = indexScan2.get_next();
+                m.mapSetup();
+                m.print();
+
+                m1 = new Map(m);
+                m1.mapSetup();
+
+               while (m != null ) {
+                m = indexScan2.get_next();
+                m.mapSetup();
+
+                    if(MapUtils.Equal(m, m1)){
+                        break;
+                    }
+                    m.print();
+
+                    m1 = new Map(m);
+                    m1.mapSetup();
+                    
+                    //m1.print();
+                }
+                try {
+                    indexScan2.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -710,19 +743,22 @@ public class BatchInsert {
             attrSize[2] = 4;
             attrSize[3] = 15;
 
-            IndexScan indexScan = null;
+            IndexScan indexScan1 = null;
+            IndexScan indexScan2 = null;
 
             Map m = null, m1 = null;
             try {
-                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), Bigtablename, "Adithya", attrType,
-                        attrSize, 4, 4, proj_list, select, 1, false);
-
-        
-                indexScan = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "Adithya", attrType,
+                // Query is for equality search for eg "Monaco is String and 13 is Integer"
+                // not work for Range Search and "*"
+                indexScan1 = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), Bigtablename, "Adithya", attrType,
                 attrSize, 4, 4, proj_list, select, 1, false);
+        
+                 indexScan2 = new IndexScan(new IndexType(IndexType.Timestamp_Index), Bigtablename, "AAAa", attrType,
+            attrSize, 4, 4, proj_list, select, 1, false);
+        
 
-
-                m = indexScan.get_next();
+                // Indexscan 1
+                m = indexScan1.get_next();
                 m.mapSetup();
                 m.print();
 
@@ -730,7 +766,7 @@ public class BatchInsert {
                 m1.mapSetup();
 
                while (m != null ) {
-                m = indexScan.get_next();
+                m = indexScan1.get_next();
                 m.mapSetup();
 
                     if(MapUtils.Equal(m, m1)){
@@ -744,10 +780,39 @@ public class BatchInsert {
                     //m1.print();
                 }
                 try {
-                    indexScan.close();
+                    indexScan1.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                // Indexscan 2 
+                m = indexScan2.get_next();
+                m.mapSetup();
+                m.print();
+
+                m1 = new Map(m);
+                m1.mapSetup();
+
+               while (m != null ) {
+                m = indexScan2.get_next();
+                m.mapSetup();
+
+                    if(MapUtils.Equal(m, m1)){
+                        break;
+                    }
+                    m.print();
+
+                    m1 = new Map(m);
+                    m1.mapSetup();
+                    
+                    //m1.print();
+                }
+                try {
+                    indexScan2.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 
 
             } catch (Exception e) {

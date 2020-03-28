@@ -39,26 +39,32 @@ public class IndexScan extends Iterator {
   public IndexScan(IndexType index, final String relName, final String indName, AttrType types[], short str_sizes[],
       int noInFlds, int noOutFlds, FldSpec outFlds[], CondExpr selects[], final int fldNum, final boolean indexOnly)
       throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException, IOException {
-        //System.out.println("hello indexscan");
-/*index + "  " + relName + " " + indName + " " + types[0] + " " + str_sizes[0] + " " + noInFlds + " " + noOutFlds + " " + */
-    //System.out.println( outFlds[0] + " " + outFlds[1]);
+    // System.out.println("hello indexscan");
+    /*
+     * index + "  " + relName + " " + indName + " " + types[0] + " " + str_sizes[0]
+     * + " " + noInFlds + " " + noOutFlds + " " +
+     */
+    // System.out.println( outFlds[0] + " " + outFlds[1]);
     _fldNum = fldNum;
     _noInFlds = noInFlds;
     _types = types;
     _s_sizes = str_sizes;
 
-    //System.out.println("1");
+    // System.out.println("1");
     AttrType[] Jtypes = new AttrType[noOutFlds];
     short[] ts_sizes;
     Jmap = new Map();
 
     // try {
-    //   System.out.println("hey");
-    //  // ts_sizes = MapUtils.setup_op_map(Jmap, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
+    // System.out.println("hey");
+    // // ts_sizes = MapUtils.setup_op_map(Jmap, Jtypes, types, noInFlds, str_sizes,
+    // outFlds, noOutFlds);
     // } catch (TupleUtilsException e) {
-    //   throw new IndexException(e, "IndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
+    // throw new IndexException(e, "IndexScan.java: TupleUtilsException caught from
+    // TupleUtils.setup_op_tuple()");
     // } catch (InvalidRelation e) {
-    //   throw new IndexException(e, "IndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
+    // throw new IndexException(e, "IndexScan.java: InvalidRelation caught from
+    // TupleUtils.setup_op_tuple()");
     // }
 
     _selects = selects;
@@ -89,7 +95,7 @@ public class IndexScan extends Iterator {
       case IndexType.Row_Label_Index:
         // error check the select condition
         // must be of the type: value op symbol || symbol op value
-        // but not symbol op symbol || value op value 
+        // but not symbol op symbol || value op value
         try {
           indFile = new BTreeFile(indName);
         } catch (Exception e) {
@@ -120,27 +126,53 @@ public class IndexScan extends Iterator {
         }
         break;
 
-      case IndexType.Row_Label_Value_Timestamp_Index:
-      try {
-        indFile = new BTreeFile(indName);
-        //indFile2 = new BTreeFile(indNa);
-      } catch (Exception e) {
-        throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-      }
+      case IndexType.Column_Row_Label_Index:
+        try {
+          indFile = new BTreeFile(indName);
+          // indFile2 = new BTreeFile(indNa);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+        }
 
-      try {
-        indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
-      } catch (Exception e) {
-        throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-      }
-      
-      
+        try {
+          indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+        }
 
         break;
 
-      case IndexType.Column_Row_Label_Timestamp_Index:
+      case IndexType.Row_Label_Value_Index:
+
+        try {
+          indFile = new BTreeFile(indName);
+          // indFile2 = new BTreeFile(indNa);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+        }
+
+        try {
+          indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+        }
+
         break;
-   
+
+        case IndexType.Timestamp_Index:
+        try {
+          indFile = new BTreeFile(indName);
+          // indFile2 = new BTreeFile(indNa);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+        }
+
+        try {
+          indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
+        } catch (Exception e) {
+          throw new IndexException(e, "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+        }
+        break;
 
       default:
         throw new UnknownIndexTypeException("Only BTree index is supported so far");
@@ -166,8 +198,8 @@ public class IndexScan extends Iterator {
 
     try {
       nextentry = indScan.get_next();
-      
-      //System.out.println(nextentry+ "next entry NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
+
+      // System.out.println(nextentry+ "next entry NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
     } catch (Exception e) {
       throw new IndexException(e, "IndexScan.java: BTree error");
     }
@@ -198,7 +230,7 @@ public class IndexScan extends Iterator {
           // calculate string size of _fldNum
           int count = 0;
           for (int i = 0; i < _fldNum; i++) {
-            //System.out.println(_fldNum);
+            // System.out.println(_fldNum);
             if (_types[i].attrType == AttrType.attrString)
               count++;
           }
@@ -224,26 +256,26 @@ public class IndexScan extends Iterator {
 
       // not index_only, need to return the whole tuple
       mid = ((LeafData) nextentry.data).getData();
-      //System.out.println(mid.slotNo + "slont no");
-      //System.out.println(mid.pageNo + "page no");
-      //System.out.println("got the mid of nextentry");
+      // System.out.println(mid.slotNo + "slont no");
+      // System.out.println(mid.pageNo + "page no");
+      // System.out.println("got the mid of nextentry");
       try {
         map1 = f.getMap(mid);
-        //map1 = stream.get_next(mid); 
-        //map1.print();
+        // map1 = stream.get_next(mid);
+        // map1.print();
       } catch (Exception e) {
         throw new IndexException(e, "IndexScan.java: getRecord failed");
       }
 
       // try {
-      //   map1.setHdr(_s_sizes);
+      // map1.setHdr(_s_sizes);
       // } catch (Exception e) {
-      //   throw new IndexException(e, "IndexScan.java: Heapfile error");
+      // throw new IndexException(e, "IndexScan.java: Heapfile error");
       // }
 
       boolean eval = true;
       try {
-        //eval = PredEval.Eval(_selects, map1, null);
+        // eval = PredEval.Eval(_selects, map1, null);
         eval = true;
       } catch (Exception e) {
         throw new IndexException(e, "IndexScan.java: Heapfile error");
@@ -252,24 +284,23 @@ public class IndexScan extends Iterator {
       if (eval) {
         // need projection.java
         // try {
-        //   Projection.Project(map1, _types, Jmap, perm_mat, _noOutFlds);
+        // Projection.Project(map1, _types, Jmap, perm_mat, _noOutFlds);
         // } catch (Exception e) {
-        //   throw new IndexException(e, "IndexScan.java: Heapfile error");
+        // throw new IndexException(e, "IndexScan.java: Heapfile error");
         // }
         return map1;
-        //return Jmap;
+        // return Jmap;
       }
-      
 
       try {
         nextentry = indScan.get_next();
       } catch (Exception e) {
         throw new IndexException(e, "IndexScan.java: BTree error");
       }
-    
+
     }
     return map1;
-    //return Jmap;
+    // return Jmap;
   }
 
   /**
