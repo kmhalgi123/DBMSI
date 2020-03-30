@@ -1,10 +1,11 @@
 package iterator;
 import global.*;
-import BigT.*;
 import diskmgr.*;
 import bufmgr.*;
 import index.*;
 import java.io.*;
+
+import BigT.*;
 
 /**
  *All the relational operators and access methods are iterators.
@@ -44,10 +45,11 @@ public abstract class Iterator implements Flags {
 	   InvalidTupleSizeException,
 	   InvalidTypeException, 
 	   PageNotReadException,
-	   MapUtilsException, 
+       MapUtilsException, 
 	   PredEvalException,
 	   SortException,
 	   LowMemException,
+	   UnknowAttrType,
 	   UnknownKeyTypeException,
 	   Exception;
 
@@ -77,13 +79,13 @@ public abstract class Iterator implements Flags {
       PageId pgid = null;
       
       for(int i=0; i < n_pages; i++) {
-        pgptr.setpage(bufs[i]);
+	pgptr.setpage(bufs[i]);
 
-        pgid = newPage(pgptr,1);
-        PageIds[i] = new PageId(pgid.pid);
-        
-        bufs[i] = pgptr.getpage();
-        
+	pgid = newPage(pgptr,1);
+	PageIds[i] = new PageId(pgid.pid);
+	
+	bufs[i] = pgptr.getpage();
+	
       }
     }
 

@@ -35,9 +35,9 @@ public class BatchInsert {
                 String que = sc.nextLine();
                 String[] words = que.split("\\s+");
                 if (words[0].equals("batchinsert")) {
-                    String filepath = words[1];
-                    int type = Integer.parseInt(words[2]);
-                    String dbname = words[3];
+                    String filepath = "/home/kaushal/DBMSI/Phase2/project2_testdata2.csv"; //words[1];
+                    int type = 1;// Integer.parseInt(words[2]);
+                    String dbname = "bd";//words[3];
                     SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, 500, "Clock");
                     try {
                         f = new bigt(dbname + "_" + String.valueOf(type), type);
@@ -57,7 +57,7 @@ public class BatchInsert {
                     if (words[4].charAt(0) == '[') {
                         // rowFilter = words[4] + words[5];
                         CondExpr c= new CondExpr();
-                        c.field = 1;
+                        c.fldNo = 1;
                         c.type1 = new AttrType(AttrType.attrSymbol);
                         c.op = new AttrOperator(AttrOperator.aopGT);
                         c.type2 = new AttrType(AttrType.attrString);
@@ -65,7 +65,7 @@ public class BatchInsert {
                         c.operand2.string = words[4].substring(1, words[4].length()-1);
                         select.add(c);
                         c= new CondExpr();
-                        c.field = 1;
+                        c.fldNo = 1;
                         c.type1 = new AttrType(AttrType.attrSymbol);
                         c.op = new AttrOperator(AttrOperator.aopLT);
                         c.type2 = new AttrType(AttrType.attrString);
@@ -76,7 +76,7 @@ public class BatchInsert {
 
                             // colFilter = words[6] + words[7];
                             c= new CondExpr();
-                            c.field = 2;
+                            c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopGT);
                             c.type2 = new AttrType(AttrType.attrString);
@@ -84,7 +84,7 @@ public class BatchInsert {
                             c.operand2.string = words[6].substring(1, words[6].length()-1);
                             select.add(c);
                             c= new CondExpr();
-                            c.field = 2;
+                            c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopLT);
                             c.type2 = new AttrType(AttrType.attrString);
@@ -94,7 +94,7 @@ public class BatchInsert {
                             if (words[8].charAt(0) == '[') {
                                 // valFilter = words[8] + words[9];
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -102,7 +102,7 @@ public class BatchInsert {
                                 c.operand2.string = words[8].substring(1, words[8].length()-1);
                                 select.add(c);
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -114,7 +114,7 @@ public class BatchInsert {
                                 valFilter = words[8];
                                 if(!valFilter.equals("*")){
                                     c= new CondExpr();
-                                    c.field = 4;
+                                    c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
                                     c.type2 = new AttrType(AttrType.attrString);
@@ -128,7 +128,7 @@ public class BatchInsert {
                             colFilter = words[6];
                             if(!colFilter.equals("*")){
                                 c= new CondExpr();
-                                c.field = 2;
+                                c.fldNo = 2;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopEQ);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -139,7 +139,7 @@ public class BatchInsert {
                             if (words[7].charAt(0) == '[') {
                                 // valFilter = words[7] + words[8];
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -147,7 +147,7 @@ public class BatchInsert {
                                 c.operand2.string = words[7].substring(1, words[7].length()-1);
                                 select.add(c);
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -159,7 +159,7 @@ public class BatchInsert {
                                 valFilter = words[7];
                                 if(!valFilter.equals("*")){
                                     c= new CondExpr();
-                                    c.field = 4;
+                                    c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
                                     c.type2 = new AttrType(AttrType.attrString);
@@ -175,7 +175,7 @@ public class BatchInsert {
                         if(!rowFilter.equals("*")){
                             CondExpr c;
                             c= new CondExpr();
-                            c.field = 1;
+                            c.fldNo = 1;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopEQ);
                             c.type2 = new AttrType(AttrType.attrString);
@@ -187,7 +187,7 @@ public class BatchInsert {
                             // colFilter = words[5] + words[6];
                             CondExpr c;
                             c= new CondExpr();
-                            c.field = 2;
+                            c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopGT);
                             c.type2 = new AttrType(AttrType.attrString);
@@ -195,7 +195,7 @@ public class BatchInsert {
                             c.operand2.string = words[5].substring(1, words[5].length()-1);
                             select.add(c);
                             c= new CondExpr();
-                            c.field = 4;
+                            c.fldNo = 4;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopLT);
                             c.type2 = new AttrType(AttrType.attrString);
@@ -207,7 +207,7 @@ public class BatchInsert {
 
                                 // valFilter = words[7] + words[8];
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -215,7 +215,7 @@ public class BatchInsert {
                                 c.operand2.string = words[7].substring(1, words[7].length()-1);
                                 select.add(c);
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -228,7 +228,7 @@ public class BatchInsert {
                                 valFilter = words[7];
                                 if(!valFilter.equals("*")){
                                     c= new CondExpr();
-                                    c.field = 4;
+                                    c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
                                     c.type2 = new AttrType(AttrType.attrString);
@@ -243,7 +243,7 @@ public class BatchInsert {
                             if(!colFilter.equals("*")){
                                 CondExpr c;
                                 c= new CondExpr();
-                                c.field = 2;
+                                c.fldNo = 2;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopEQ);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -255,7 +255,7 @@ public class BatchInsert {
                                 // valFilter = words[6] + words[7];
                                 CondExpr c;
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -263,7 +263,7 @@ public class BatchInsert {
                                 c.operand2.string = words[6].substring(1, words[6].length()-1);
                                 select.add(c);
                                 c= new CondExpr();
-                                c.field = 4;
+                                c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
@@ -276,7 +276,7 @@ public class BatchInsert {
                                 if(!valFilter.equals("*")){
                                     CondExpr c;
                                     c= new CondExpr();
-                                    c.field = 4;
+                                    c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
                                     c.type2 = new AttrType(AttrType.attrString);
@@ -418,7 +418,7 @@ public class BatchInsert {
 
                 }
                 count++;
-                // System.out.println(count);
+                System.out.println(count);
             }
             System.out.println("Hello "+ f.getMapCnt());
 
@@ -466,12 +466,12 @@ public class BatchInsert {
         proj_list[3]= new FldSpec(rel, 4);
         
         System.out.println(Arrays.toString(select));
-        Sort s = null;
+        // Sort s = null;
 
-        FileScan fileScan = new FileScan(filename, attrType, new short[]{32,32,32}, (short) 4, 4, proj_list, select);
-        if (order != 0) {
-            s = new Sort(attrType,(short) 4, new short[]{32,32,32}, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300);
-        }
+        FileScan fileScan = new FileScan(filename, 1, new short[]{32,32,32}, 4, proj_list, select);
+        // if (order != 0) {
+        //     s = new Sort(attrType,(short) 4, new short[]{32,32,32}, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300);
+        // }
         
         Map map = new Map();
         MID mid = new MID();
@@ -479,12 +479,12 @@ public class BatchInsert {
         int c = 0;
         System.out.println();
         while(!done){
-            if(order == 0){
+            // if(order == 0){
                 map = fileScan.get_next();
-            }
-            else{
-                map = s.get_next();
-            }
+            // }
+            // else{
+            //     map = s.get_next();
+            // }
             if(map == null){
                 done = true;
             }else{

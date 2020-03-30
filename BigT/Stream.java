@@ -7,11 +7,8 @@ package BigT;
  */
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.StringTokenizer;
 
 import global.*;
-import bufmgr.*;
 import diskmgr.*;
 
 
@@ -65,9 +62,9 @@ public class Stream implements GlobalConst{
     /** Status of next user status */
     private boolean nextUserStatus;
 
-    private int order;
+    // private int order;
 
-    private String rowFilter = "", columnFilter = "", valueFilter = "";
+    // private String rowFilter = "", columnFilter = "", valueFilter = "";
     
      
     /** The constructor pins the first directory page in the file
@@ -84,10 +81,10 @@ public class Stream implements GlobalConst{
         init(hf);
     }
 
-    public Stream(bigt hf, int order, String rowFilter, String columnFilter, String valueFilter)
-            throws InvalidTupleSizeException, IOException, HFBufMgrException {
-        init(hf, order, rowFilter, columnFilter, valueFilter);
-    }
+    // public Stream(bigt hf, int order, String rowFilter, String columnFilter, String valueFilter)
+    //         throws InvalidTupleSizeException, IOException, HFBufMgrException {
+    //     init(hf, order, rowFilter, columnFilter, valueFilter);
+    // }
 
 
   
@@ -106,10 +103,7 @@ public class Stream implements GlobalConst{
         Map recptrmap = null;
         
         if (nextUserStatus != true) {
-            // if(order == MapOrder.Ascending)
-                nextDataPage();
-            // else
-            //     prevDataPage();
+            nextDataPage();
         }
         
         if (datapage == null) return null;
@@ -120,41 +114,13 @@ public class Stream implements GlobalConst{
         try {
             recptrmap = datapage.getMap(rid);
         } catch (Exception e) {
-        //    System.err.println("SCAN: Error in Scan" + e);
             e.printStackTrace();
-        }   
-        //query mydata2.bigdb_1 1 1 Singapore * * 100
-        // if (order == MapOrder.Ascending) {
-            userrid = datapage.nextMap(rid);    
-        // }else {
-        //     userrid = datapage.prevMap(rid);
-        // }
+        } 
+        userrid = datapage.nextMap(rid);    
+        
         if(userrid == null) nextUserStatus = false;
         else nextUserStatus = true;
         recptrmap.mapSetup();
-        String rowLabel = recptrmap.getRowLabel();
-        String colLabel = recptrmap.getColumnLabel();
-        String valLabel = recptrmap.getValue();
-        // if (isRowFilterARange){
-        //     if(rowLabel.compareToIgnoreCase(rowval1) < 0 || rowLabel.compareToIgnoreCase(rowval2) > 0)
-        //         return getNext(new MID());
-        // }
-        // if (isColFilterARange){
-        //     if(colLabel.compareToIgnoreCase(colval1) < 0 || colLabel.compareToIgnoreCase(colval2) > 0)
-        //         return getNext(new MID());
-        // }
-        // if (isValFilterARange){
-        //     if(valLabel.compareToIgnoreCase(val1) < 0 || valLabel.compareToIgnoreCase(val2) > 0)
-        //         return getNext(new MID());
-        // }
-        // if (!isRowFilterARange && rowFilter != "" && !rowLabel.equals(rowFilter))
-        //     return getNext(new MID());
-        // if (!isColFilterARange && columnFilter != "" && !colLabel.equals(columnFilter))
-        //     return getNext(new MID());
-        // if (!isValFilterARange && valueFilter != "" && !valLabel.equals(valueFilter))
-        //     return getNext(new MID());
-        // if (recptrmap.getRowLabel().contains(rowFilter) && recptrmap.getColumnLabel().contains(columnFilter) && recptrmap.getValue().contains(valueFilter))
-        //     return recptrmap;
         
         return recptrmap;
         
@@ -235,51 +201,51 @@ public class Stream implements GlobalConst{
         firstDataPage();
     }
 
-    private void init(bigt hf, int order, String rowFilter, String columnFilter, String valueFilter)
-            throws InvalidTupleSizeException, IOException, HFBufMgrException {
-        _hf = hf;
-        this.order = order;
-        this.rowFilter = rowFilter;
-        this.columnFilter = columnFilter;
-        this.valueFilter = valueFilter;
-        if (rowFilter.equals("*")) {
-            this.rowFilter = "";
-        }
-        if (columnFilter.equals("*")) {
-            this.columnFilter = "";
-        }
-        if (valueFilter.equals("*")) {
-            this.valueFilter = "";
-        }
-        // System.out.println(rowFilter+coulmnFilter.charAt(0)+valueFilter);
-        if (rowFilter.charAt(0) == '['){
-            isRowFilterARange = true;
-            rowFilter = rowFilter.substring(1, rowFilter.length()-1 );
-            StringTokenizer s = new StringTokenizer(rowFilter);
-            rowval1 = s.nextToken(",").trim();
-            rowval2 = s.nextToken(",").trim();
-        }
-        // System.out.println(coulmnFilter.charAt(0));
-        if (columnFilter.charAt(0) == '['){
-            isColFilterARange = true;
-            columnFilter = columnFilter.substring(1, columnFilter.length()-1 );
-            StringTokenizer s = new StringTokenizer(columnFilter);
-            colval1 = s.nextToken(",").trim();
-            colval2 = s.nextToken(",").trim();
-        }
-        if (valueFilter.charAt(0) == '['){
-            isValFilterARange = true;
-            valueFilter = valueFilter.substring(1, valueFilter.length()-1 );
-            StringTokenizer s = new StringTokenizer(valueFilter);
-            val1 = s.nextToken(",").trim();
-            val2 = s.nextToken(",").trim();
-        }
-        if (order == MapOrder.Ascending) {
-            firstDataPage();
-        }else {
-            lastDataPage();
-        }
-    }
+    // private void init(bigt hf, int order, String rowFilter, String columnFilter, String valueFilter)
+    //         throws InvalidTupleSizeException, IOException, HFBufMgrException {
+    //     _hf = hf;
+    //     this.order = order;
+    //     this.rowFilter = rowFilter;
+    //     this.columnFilter = columnFilter;
+    //     this.valueFilter = valueFilter;
+    //     if (rowFilter.equals("*")) {
+    //         this.rowFilter = "";
+    //     }
+    //     if (columnFilter.equals("*")) {
+    //         this.columnFilter = "";
+    //     }
+    //     if (valueFilter.equals("*")) {
+    //         this.valueFilter = "";
+    //     }
+    //     // System.out.println(rowFilter+coulmnFilter.charAt(0)+valueFilter);
+    //     if (rowFilter.charAt(0) == '['){
+    //         isRowFilterARange = true;
+    //         rowFilter = rowFilter.substring(1, rowFilter.length()-1 );
+    //         StringTokenizer s = new StringTokenizer(rowFilter);
+    //         rowval1 = s.nextToken(",").trim();
+    //         rowval2 = s.nextToken(",").trim();
+    //     }
+    //     // System.out.println(coulmnFilter.charAt(0));
+    //     if (columnFilter.charAt(0) == '['){
+    //         isColFilterARange = true;
+    //         columnFilter = columnFilter.substring(1, columnFilter.length()-1 );
+    //         StringTokenizer s = new StringTokenizer(columnFilter);
+    //         colval1 = s.nextToken(",").trim();
+    //         colval2 = s.nextToken(",").trim();
+    //     }
+    //     if (valueFilter.charAt(0) == '['){
+    //         isValFilterARange = true;
+    //         valueFilter = valueFilter.substring(1, valueFilter.length()-1 );
+    //         StringTokenizer s = new StringTokenizer(valueFilter);
+    //         val1 = s.nextToken(",").trim();
+    //         val2 = s.nextToken(",").trim();
+    //     }
+    //     if (order == MapOrder.Ascending) {
+    //         firstDataPage();
+    //     }else {
+    //         lastDataPage();
+    //     }
+    // }
 
 
     /** Closes the Scan object */
@@ -454,236 +420,236 @@ public class Stream implements GlobalConst{
     
     }
     
-    private boolean lastDataPage() throws HFBufMgrException, IOException {
-        DataPageInfo dpinfo;
-        Map        rectuple = null;
-        Boolean      bst;
-        BigPage cuDirPage = new BigPage();
-        PageId nextDirPageId = new PageId();
-        /** copy data about first directory page */
+    // private boolean lastDataPage() throws HFBufMgrException, IOException {
+    //     DataPageInfo dpinfo;
+    //     Map        rectuple = null;
+    //     Boolean      bst;
+    //     BigPage cuDirPage = new BigPage();
+    //     PageId nextDirPageId = new PageId();
+    //     /** copy data about first directory page */
     
-        dirpageId.pid = _hf._firstDirPageId.pid; 
-        nextDirPageId = dirpageId;
-        nextUserStatus = true;
+    //     dirpageId.pid = _hf._firstDirPageId.pid; 
+    //     nextDirPageId = dirpageId;
+    //     nextUserStatus = true;
 
-        // try {
-        //     dirpage  = new BigPage();
-        //     pinPage(dirpageId, (Page) dirpage, false);	   
-        // } catch (Exception e) {
-        //     //    System.err.println("SCAN Error, try pinpage: " + e);
-        //     e.printStackTrace();
-        // }
-        while(nextDirPageId.pid != INVALID_PAGE){
-            dirpage  = new BigPage();
-            pinPage(dirpageId, (Page) dirpage, false);
-            nextDirPageId = dirpage.getNextPage();
-            unpinPage(dirpageId, false);
-            if (nextDirPageId.pid != INVALID_PAGE) {
-                dirpageId.pid = nextDirPageId.pid;
-            }
-            // unpinPage(datapageId, false);
-        }
+    //     // try {
+    //     //     dirpage  = new BigPage();
+    //     //     pinPage(dirpageId, (Page) dirpage, false);	   
+    //     // } catch (Exception e) {
+    //     //     //    System.err.println("SCAN Error, try pinpage: " + e);
+    //     //     e.printStackTrace();
+    //     // }
+    //     while(nextDirPageId.pid != INVALID_PAGE){
+    //         dirpage  = new BigPage();
+    //         pinPage(dirpageId, (Page) dirpage, false);
+    //         nextDirPageId = dirpage.getNextPage();
+    //         unpinPage(dirpageId, false);
+    //         if (nextDirPageId.pid != INVALID_PAGE) {
+    //             dirpageId.pid = nextDirPageId.pid;
+    //         }
+    //         // unpinPage(datapageId, false);
+    //     }
 
-        /** get first directory page and pin it */
-        // try {
-        //     dirpage  = new BigPage();
-        //     pinPage(dirpageId, (Page) dirpage, false);	   
-        // } catch (Exception e) {
-        //     //    System.err.println("SCAN Error, try pinpage: " + e);
-        //     e.printStackTrace();
-        // }
+    //     /** get first directory page and pin it */
+    //     // try {
+    //     //     dirpage  = new BigPage();
+    //     //     pinPage(dirpageId, (Page) dirpage, false);	   
+    //     // } catch (Exception e) {
+    //     //     //    System.err.println("SCAN Error, try pinpage: " + e);
+    //     //     e.printStackTrace();
+    //     // }
 
-        datapageRid = dirpage.firstMap();
-        MID tr = datapageRid;
-        while (tr != null){
-            tr = dirpage.nextMap(datapageRid);
-            if( tr != null)
-                datapageRid = tr;
-        }
-        if (datapageRid != null) {
-            /** there is a datapage record on the first directory page: */
+    //     datapageRid = dirpage.firstMap();
+    //     MID tr = datapageRid;
+    //     while (tr != null){
+    //         tr = dirpage.nextMap(datapageRid);
+    //         if( tr != null)
+    //             datapageRid = tr;
+    //     }
+    //     if (datapageRid != null) {
+    //         /** there is a datapage record on the first directory page: */
             
-            try {
+    //         try {
                 
-                rectuple = dirpage.getMap(datapageRid);
-            } catch (Exception e) {
-                //	System.err.println("SCAN: Chain Error in Scan: " + e);
-                e.printStackTrace();
-            }		
+    //             rectuple = dirpage.getMap(datapageRid);
+    //         } catch (Exception e) {
+    //             //	System.err.println("SCAN: Chain Error in Scan: " + e);
+    //             e.printStackTrace();
+    //         }		
       			    
-            dpinfo = new DataPageInfo(rectuple);
-            datapageId.pid = dpinfo.pageId.pid;
+    //         dpinfo = new DataPageInfo(rectuple);
+    //         datapageId.pid = dpinfo.pageId.pid;
 
-        }
+    //     }
 
-        datapage = null;
+    //     datapage = null;
 
-        try{
-            prevDataPage();
-        }catch (Exception e){
+    //     try{
+    //         prevDataPage();
+    //     }catch (Exception e){
 
-        }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    private boolean prevDataPage() throws IOException {
-        DataPageInfo dpinfo;
+    // private boolean prevDataPage() throws IOException {
+    //     DataPageInfo dpinfo;
         
-        boolean nextDataPageStatus;
-        PageId prevDirPageId = new PageId();
-        Map rectuple = null;
+    //     boolean nextDataPageStatus;
+    //     PageId prevDirPageId = new PageId();
+    //     Map rectuple = null;
 
-        if ((dirpage == null) && (datapageId.pid == INVALID_PAGE))
-            return false;
+    //     if ((dirpage == null) && (datapageId.pid == INVALID_PAGE))
+    //         return false;
 
-        if (datapage == null) {
-            if (datapageId.pid == INVALID_PAGE) {
-                // heapfile is empty to begin with
+    //     if (datapage == null) {
+    //         if (datapageId.pid == INVALID_PAGE) {
+    //             // heapfile is empty to begin with
     
-                try{
-                    unpinPage(dirpageId, false);
-                    dirpage = null;
-                }
-                catch (Exception e){
-                    //  System.err.println("Scan: Chain Error: " + e);
-                    e.printStackTrace();
-                }
+    //             try{
+    //                 unpinPage(dirpageId, false);
+    //                 dirpage = null;
+    //             }
+    //             catch (Exception e){
+    //                 //  System.err.println("Scan: Chain Error: " + e);
+    //                 e.printStackTrace();
+    //             }
         
-            } else {
+    //         } else {
         
-                // pin first data page
-                try {
-                    datapage  = new BigPage();
-                    pinPage(datapageId, (Page) datapage, false);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
+    //             // pin first data page
+    //             try {
+    //                 datapage  = new BigPage();
+    //                 pinPage(datapageId, (Page) datapage, false);
+    //             }
+    //             catch (Exception e){
+    //                 e.printStackTrace();
+    //             }
                 
-                try {
-                    userrid = datapage.firstMap();
-                    MID rMid = userrid;
-                    while(rMid != null){
-                        rMid = datapage.nextMap(userrid);
-                        if (rMid != null) {
-                            userrid = rMid;    
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+    //             try {
+    //                 userrid = datapage.firstMap();
+    //                 MID rMid = userrid;
+    //                 while(rMid != null){
+    //                     rMid = datapage.nextMap(userrid);
+    //                     if (rMid != null) {
+    //                         userrid = rMid;    
+    //                     }
+    //                 }
+    //             }
+    //             catch (Exception e) {
+    //                 e.printStackTrace();
+    //             }
         
-                return true;
-            }
-        }
+    //             return true;
+    //         }
+    //     }
 
-        try{
-            unpinPage(datapageId, false /* no dirty */);
-            datapage = null;
-        }
-            catch (Exception e){
+    //     try{
+    //         unpinPage(datapageId, false /* no dirty */);
+    //         datapage = null;
+    //     }
+    //         catch (Exception e){
         
-        }
+    //     }
 
-        if (dirpage == null) {
-            return false;
-        }
+    //     if (dirpage == null) {
+    //         return false;
+    //     }
     
-        datapageRid = dirpage.prevMap(datapageRid);
+    //     datapageRid = dirpage.prevMap(datapageRid);
 
-        if (datapageRid == null) return false;
+    //     if (datapageRid == null) return false;
 
-        else if (datapageRid.slotNo == INVALID_PAGE || datapageRid.pageNo.pid == INVALID_PAGE) {
-            nextDataPageStatus = false;
-            // we have read all datapage records on the current directory page
+    //     else if (datapageRid.slotNo == INVALID_PAGE || datapageRid.pageNo.pid == INVALID_PAGE) {
+    //         nextDataPageStatus = false;
+    //         // we have read all datapage records on the current directory page
             
-            // get next directory page
-            prevDirPageId = dirpage.getPrevPage();
+    //         // get next directory page
+    //         prevDirPageId = dirpage.getPrevPage();
     
-            // unpin the current directory page
-            try {
-                unpinPage(dirpageId, false /* not dirty */);
-                dirpage = null;
+    //         // unpin the current directory page
+    //         try {
+    //             unpinPage(dirpageId, false /* not dirty */);
+    //             dirpage = null;
                 
-                datapageId.pid = INVALID_PAGE;
-            } catch (Exception e) {
+    //             datapageId.pid = INVALID_PAGE;
+    //         } catch (Exception e) {
 	
-            }
+    //         }
 		    
-            if (prevDirPageId.pid == INVALID_PAGE)
-	            return false;
-            else {
-                // ASSERTION:
-                // - nextDirPageId has correct id of the page which is to get
+    //         if (prevDirPageId.pid == INVALID_PAGE)
+	//             return false;
+    //         else {
+    //             // ASSERTION:
+    //             // - nextDirPageId has correct id of the page which is to get
                 
-                dirpageId = prevDirPageId;
+    //             dirpageId = prevDirPageId;
                 
-                try { 
-                    dirpage  = new BigPage();
-                    pinPage(dirpageId, (Page)dirpage, false);
-                } catch (Exception e){ }
+    //             try { 
+    //                 dirpage  = new BigPage();
+    //                 pinPage(dirpageId, (Page)dirpage, false);
+    //             } catch (Exception e){ }
 	
-                if (dirpage == null)
-                    return false;
+    //             if (dirpage == null)
+    //                 return false;
                 
-                try {
-                    datapageRid = dirpage.firstMap();
-                    while (datapageRid != null) {
-                        datapageRid = dirpage.nextMap(datapageRid);
-                    }
-                    nextDataPageStatus = true;
-                } catch (Exception e){
-                    nextDataPageStatus = false;
-                    return false;
-	            } 
-            }
-        }
-        try {
-            rectuple = dirpage.getMap(datapageRid);
-        }
+    //             try {
+    //                 datapageRid = dirpage.firstMap();
+    //                 while (datapageRid != null) {
+    //                     datapageRid = dirpage.nextMap(datapageRid);
+    //                 }
+    //                 nextDataPageStatus = true;
+    //             } catch (Exception e){
+    //                 nextDataPageStatus = false;
+    //                 return false;
+	//             } 
+    //         }
+    //     }
+    //     try {
+    //         rectuple = dirpage.getMap(datapageRid);
+    //     }
 	
-        catch (Exception e) {
-            System.err.println("HeapFile: Error in Scan" + e);
-        }
+    //     catch (Exception e) {
+    //         System.err.println("HeapFile: Error in Scan" + e);
+    //     }
 	
-        if (rectuple.size() != DataPageInfo.size)
-            return false;
+    //     if (rectuple.size() != DataPageInfo.size)
+    //         return false;
                         
-        dpinfo = new DataPageInfo(rectuple);
-        datapageId.pid = dpinfo.pageId.pid;
+    //     dpinfo = new DataPageInfo(rectuple);
+    //     datapageId.pid = dpinfo.pageId.pid;
 	
-        try {
-            datapage = new BigPage();
-            pinPage(dpinfo.pageId, (Page) datapage, false);
-        } catch (Exception e) {
-            System.err.println("HeapFile: Error in Scan" + e);
-        }
+    //     try {
+    //         datapage = new BigPage();
+    //         pinPage(dpinfo.pageId, (Page) datapage, false);
+    //     } catch (Exception e) {
+    //         System.err.println("HeapFile: Error in Scan" + e);
+    //     }
 	
      
-        // - directory page is pinned
-        // - datapage is pinned
-        // - this->dirpageId, this->dirpage correct
-        // - this->datapageId, this->datapage, this->datapageRid correct
+    //     // - directory page is pinned
+    //     // - datapage is pinned
+    //     // - this->dirpageId, this->dirpage correct
+    //     // - this->datapageId, this->datapage, this->datapageRid correct
 
-        userrid = datapage.firstMap();
-        MID rt = userrid;
-        while (rt != null){
-            rt = datapage.nextMap(userrid);
-            if(rt != null)
-                userrid = rt;
-        }
+    //     userrid = datapage.firstMap();
+    //     MID rt = userrid;
+    //     while (rt != null){
+    //         rt = datapage.nextMap(userrid);
+    //         if(rt != null)
+    //             userrid = rt;
+    //     }
         
-        if(userrid == null)
-        {
-            nextUserStatus = false;
-            return false;
-        }
+    //     if(userrid == null)
+    //     {
+    //         nextUserStatus = false;
+    //         return false;
+    //     }
   
-        return true;
+    //     return true;
 
-    }
+    // }
 
   /** Move to the next data page in the file and 
    * retrieve the next data page. 

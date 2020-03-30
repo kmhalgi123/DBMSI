@@ -56,7 +56,8 @@ public class pnodeSplayPQ extends pnodePQ
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
    */
-  public void enq(pnode item) throws IOException, MapUtilsException {
+  public void enq(pnode item) throws IOException, UnknowAttrType, MapUtilsException 
+  {
     count ++;
     pnodeSplayNode newnode = new pnodeSplayNode(item);
     pnodeSplayNode t = root;
@@ -75,7 +76,7 @@ public class pnodeSplayPQ extends pnodePQ
 
     while (!done) {
       if ((sort_order.mapOrder == MapOrder.Ascending && comp >= 0) || (sort_order.mapOrder == MapOrder.Descending && comp <= 0)) {
-	      pnodeSplayNode tr = t.rt;
+        pnodeSplayNode tr = t.rt;
         if (tr == null) {
           tr = newnode;
           comp = 0;
@@ -88,7 +89,7 @@ public class pnodeSplayPQ extends pnodePQ
           l = t;
           t = tr;
         }
-	      else {
+        else {
           pnodeSplayNode trr = tr.rt;
           if (trr == null) {
             trr = newnode;
@@ -96,7 +97,7 @@ public class pnodeSplayPQ extends pnodePQ
             done = true;
           }
           else comp = pnodeCMP(item, trr.item);
-	  
+          
           if ((t.rt = tr.lt) != null) t.rt.par = t;
           tr.lt = t; t.par = tr;
           l.rt = tr; tr.par = l;
@@ -105,34 +106,34 @@ public class pnodeSplayPQ extends pnodePQ
         }
       } // end of if(comp >= 0)
       else {
-	      pnodeSplayNode tl = t.lt;
+        pnodeSplayNode tl = t.lt;
         if (tl == null) {
           tl = newnode;
           comp = 0;
           done = true;
         }
         else comp = pnodeCMP(item, tl.item);
-	
+        
         if ((sort_order.mapOrder == MapOrder.Ascending && comp >= 0) || (sort_order.mapOrder == MapOrder.Descending && comp <= 0)) {
           r.lt = t; t.par = r;
           r = t;
           t = tl;
         }
-	      else {
+        else {
           pnodeSplayNode tll = tl.lt;
           if (tll == null) {
             tll = newnode;
             comp = 0;
             done = true;
           }
-	        else comp = pnodeCMP(item, tll.item);
-	  
+          else comp = pnodeCMP(item, tll.item);
+          
           if ((t.lt = tl.rt) != null) t.lt.par = t;
           tl.rt = t; t.par = tl;
           r.lt = tl; tl.par = r;
           r = tl;
           t = tll;
-	      }
+        }
       } // end of else
     } // end of while(!done)
     

@@ -1,8 +1,8 @@
 package iterator;
 
+
 import BigT.*;
 import global.*;
-
 import java.io.*;
 
 /**
@@ -31,47 +31,66 @@ public class MapUtils
    *          1        if the tuple is greater,
    *         -1        if the tuple is smaller,                              
    */
-    public static int CompareMapWithMap(Map m1, Map m2, int map_fld_no) throws IOException, MapUtilsException {
-        int   t1_i,  t2_i;
-        String t1_s, t2_s;
-
-        switch (map_fld_no) {
-            case 1:
-                t1_s = m1.getRowLabel();
-                t2_s = m2.getRowLabel();
-                
-                if(t1_s.compareToIgnoreCase( t2_s)>0)return 1;
-                if (t1_s.compareToIgnoreCase( t2_s)<0)return -1;
-                return 0;
-
-            case 2:
-                t1_s = m1.getColumnLabel();
-                t2_s = m2.getColumnLabel();
-                
-                if(t1_s.compareToIgnoreCase( t2_s)>0)return 1;
-                if (t1_s.compareToIgnoreCase( t2_s)<0)return -1;
-                return 0;
-
-            case 3:
-                t1_i = m1.getTimeStamp();
-                t2_i = m2.getTimeStamp();
-               
-                if (t1_i == t2_i) return  0;
-                else if (t1_i <  t2_i) return -1;
-                else return  1;
-
-            case 4:
-                t1_s = m1.getValue();
-                t2_s = m2.getValue();
-                t1_i = Integer.parseInt(t1_s);
-                t2_i = Integer.parseInt(t2_s);
-                if (t1_i == t2_i) return  0;
-                else if (t1_i <  t2_i) return -1;
-                else return  1;
-
-            default:
-                throw new MapUtilsException("FieldNumberOutOfBoundException is caught by MapUtils.java");
+  public static int CompareMapWithMap(Map  m1, Map m2, int fld_no) throws IOException, UnknowAttrType, MapUtilsException {
+    int   t1_i,  t2_i;
+    String t1_s, t2_s;
+      
+    switch (fld_no) {
+      case 1:                // Compare two integers.
+        try {
+          t1_s = m1.getRowLabel();
+          t2_s = m2.getRowLabel();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
         }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        if (t1_s.compareTo( t2_s)<0)return -1;
+        return 0;
+        
+      case 2:                // Compare two floats
+        try {
+          t1_s = m1.getColumnLabel();
+          t2_s = m2.getColumnLabel();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        if (t1_s.compareTo( t2_s)<0)return -1;
+        return 0;
+        
+      case 3:                // Compare two strings
+        try {
+          t1_i = m1.getTimeStamp();
+          t2_i = m2.getTimeStamp();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        if (t1_i == t2_i) return  0;
+        if (t1_i <  t2_i) return -1;
+        if (t1_i >  t2_i) return  1;
+        return 0;
+
+      case 4:                // Compare two floats
+        try {
+          t1_s = m1.getValue();
+          t2_s = m2.getValue();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        if (t1_s.compareTo( t2_s)<0)return -1;
+        return 0;
+      default:
+        
+        throw new UnknowAttrType(null, "Don't know how to handle attrSymbol, attrNull");
+        
+      }
     }
   
   
@@ -91,9 +110,11 @@ public class MapUtils
    *@exception IOException some I/O fault
    *@exception TupleUtilsException exception from this class   
    */            
-    public static int CompareMapWithValue( Map m1, Map value, int t1_fld_no) throws IOException, MapUtilsException {
-        return CompareMapWithMap(m1, value, t1_fld_no);
-    }
+  public static int CompareMapWithValue(Map m1, Map value, int fld_no) throws IOException, UnknowAttrType, MapUtilsException
+  {
+    value.mapSetup();
+    return CompareMapWithMap(m1, value, fld_no);
+  }
   
   /**
    *This function Compares two Tuple inn all fields 
@@ -108,14 +129,13 @@ public class MapUtils
    *@exception TupleUtilsException exception from this class
    */            
   
-    public static boolean Equal(Map m1, Map m2) throws IOException,MapUtilsException {
-        int i;
-        
-        for (i = 1; i <= 4; i++)
-            if (CompareMapWithMap(m1,m2,i) != 0)
-                return false;
-        return true;
-    }
+  public static boolean Equal(Map m1, Map m2) throws IOException,UnknowAttrType,MapUtilsException
+  {
+    for (int i = 1; i <= 4; i++)
+    if (CompareMapWithMap(m1, m2, i) != 0)
+      return false;
+    return true;
+  }
   
   /**
    *get the string specified by the field number
@@ -125,24 +145,16 @@ public class MapUtils
    *@exception IOException some I/O fault
    *@exception TupleUtilsException exception from this class
    */
-    public static String Value(Map map, int fldno) throws IOException, MapUtilsException {
-        switch (fldno) {
-            case 1:
-                return map.getRowLabel();
-
-            case 2:
-                return map.getColumnLabel();
-
-            case 3:
-                return String.valueOf(map.getTimeStamp());
-
-            case 4:
-                return map.getValue();
-
-            default:
-                throw new MapUtilsException("FieldNumberOutOfBoundException is caught by MapUtils.java");
-        }
+  public static String Value(Map map, int fldno) throws IOException, MapUtilsException
+  {
+    String temp;
+    try{
+      temp = map.getStrFld(fldno);
+    }catch (Exception e){
+      throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
     }
+    return temp;
+  }
   
  
   /**
@@ -155,25 +167,45 @@ public class MapUtils
    *@exception IOException some I/O fault
    *@exception TupleUtilsException exception from this class
    */  
-    public static void SetValue(Map value, Map map, int fld_no) throws IOException, MapUtilsException {
-        switch (fld_no) {
-            case 1:
-                value.setRowLabel(map.getRowLabel());
-                break;
-            case 2:
-                value.setColumnLabel(map.getColumnLabel());
-                break;
-            case 3:
-                value.setTimeStamp(map.getTimeStamp());
-                break;
-            case 4:
-                value.setValue(map.getValue());
-                break;
-            default:
-                break;
+  public static void SetValue(Map value, Map map, int fld_no) throws IOException, UnknowAttrType, MapUtilsException
+  {
+      
+    switch (fld_no) {
+      case 1:
+        try {
+          value.setRowLabel(map.getRowLabel());
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
         }
-        return;
-    }
+        break;
+      case 2:
+        try {
+          value.setColumnLabel(map.getColumnLabel());
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        break;
+      case 3:
+        try {
+          value.setTimeStamp(map.getTimeStamp());
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        break;
+      case 4:
+        try {
+          value.setValue(map.getValue());
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        break;
+      default:
+        throw new UnknowAttrType(null, "Don't know how to handle attrSymbol, attrNull");
+        
+	  }
+      
+    return;
+  }
   
   
   /**
@@ -191,59 +223,66 @@ public class MapUtils
    *@exception IOException some I/O fault
    *@exception TupleUtilsException exception from this class
    */
-  public static short[] setup_op_tuple(Map Jtuple, AttrType[] res_attrs,
-				       AttrType in1[], int len_in1, AttrType in2[], 
-				       int len_in2, short t1_str_sizes[], 
-				       short t2_str_sizes[], 
-				       FldSpec proj_list[], int nOutFlds)
-    throws IOException,
-	   MapUtilsException
+  public static short[] setup_op_tuple(Map Jtuple, AttrType[] res_attrs, 
+    short t1_str_sizes[], 
+    short t2_str_sizes[], 
+    FldSpec proj_list[], int nOutFlds)
+    throws IOException, MapUtilsException
     {
-        short [] sizesT1 = new short [len_in1];
-        short [] sizesT2 = new short [len_in2];
-        int i, count = 0;
-        
-        for (i = 0; i < len_in1; i++)
-            if (in1[i].attrType == AttrType.attrString)
-                sizesT1[i] = t1_str_sizes[count++];
-        
-        for (count = 0, i = 0; i < len_in2; i++)
-	        if (in2[i].attrType == AttrType.attrString)
-	            sizesT2[i] = t2_str_sizes[count++];
+      short [] sizesT1 = new short [4];
+      short [] sizesT2 = new short [4];
+      AttrType in1[] = {new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrInteger),
+        new AttrType(AttrType.attrString)};
+
+      AttrType in2[] = {new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrInteger),
+        new AttrType(AttrType.attrString)};
+      int i, count = 0;
       
-        int n_strs = 0; 
-        for (i = 0; i < nOutFlds; i++)
-        {
-            if (proj_list[i].relation.key == RelSpec.outer)
-                res_attrs[i] = new AttrType(in1[proj_list[i].offset-1].attrType);
-            else if (proj_list[i].relation.key == RelSpec.innerRel)
-                res_attrs[i] = new AttrType(in2[proj_list[i].offset-1].attrType);
-        }
+      for (i = 0; i < 4; i++)
+        if (in1[i].attrType == AttrType.attrString)
+	        sizesT1[i] = t1_str_sizes[count++];
       
-        // Now construct the res_str_sizes array.
-        for (i = 0; i < nOutFlds; i++)
-        {
-            if (proj_list[i].relation.key == RelSpec.outer && in1[proj_list[i].offset-1].attrType == AttrType.attrString)
-                    n_strs++;
-            else if (proj_list[i].relation.key == RelSpec.innerRel && in2[proj_list[i].offset-1].attrType == AttrType.attrString)
-                    n_strs++;
-        }
+      for (count = 0, i = 0; i < 4; i++)
+        if (in2[i].attrType == AttrType.attrString)
+          sizesT2[i] = t2_str_sizes[count++];
       
-        short[] res_str_sizes = new short [n_strs];
-        count = 0;
-        for (i = 0; i < nOutFlds; i++)
-        {
-            if (proj_list[i].relation.key == RelSpec.outer && in1[proj_list[i].offset-1].attrType ==AttrType.attrString)
-                    res_str_sizes[count++] = sizesT1[proj_list[i].offset-1];
-            else if (proj_list[i].relation.key == RelSpec.innerRel && in2[proj_list[i].offset-1].attrType ==AttrType.attrString)
-                    res_str_sizes[count++] = sizesT2[proj_list[i].offset-1];
-        }
-        try {
-	        Jtuple.setHdr(res_str_sizes);
-        }catch (Exception e){
-	        throw new MapUtilsException(e,"setHdr() failed");
-        }
-        return res_str_sizes;
+      int n_strs = 0; 
+      for (i = 0; i < nOutFlds; i++)
+      {
+        if (proj_list[i].relation.key == RelSpec.outer)
+          res_attrs[i] = new AttrType(in1[proj_list[i].offset-1].attrType);
+        else if (proj_list[i].relation.key == RelSpec.innerRel)
+          res_attrs[i] = new AttrType(in2[proj_list[i].offset-1].attrType);
+      }
+      
+      // Now construct the res_str_sizes array.
+      for (i = 0; i < nOutFlds; i++)
+      {
+        if (proj_list[i].relation.key == RelSpec.outer && in1[proj_list[i].offset-1].attrType == AttrType.attrString)
+                n_strs++;
+        else if (proj_list[i].relation.key == RelSpec.innerRel && in2[proj_list[i].offset-1].attrType == AttrType.attrString)
+                n_strs++;
+      }
+      
+      short[] res_str_sizes = new short [n_strs];
+      count         = 0;
+      for (i = 0; i < nOutFlds; i++)
+      {
+        if (proj_list[i].relation.key == RelSpec.outer && in1[proj_list[i].offset-1].attrType ==AttrType.attrString)
+                res_str_sizes[count++] = sizesT1[proj_list[i].offset-1];
+        else if (proj_list[i].relation.key == RelSpec.innerRel && in2[proj_list[i].offset-1].attrType ==AttrType.attrString)
+                res_str_sizes[count++] = sizesT2[proj_list[i].offset-1];
+      }
+      try {
+	      Jtuple.setHdr(res_str_sizes);
+      }catch (Exception e){
+	      throw new MapUtilsException(e,"setHdr() failed");
+      }
+      return res_str_sizes;
     }
   
  
@@ -262,52 +301,58 @@ public class MapUtils
    */
 
   public static short[] setup_op_tuple(Map Jtuple, AttrType res_attrs[],
-				       AttrType in1[], int len_in1,
-				       short t1_str_sizes[], 
-				       FldSpec proj_list[], int nOutFlds)
+    short t1_str_sizes[], 
+    FldSpec proj_list[], int nOutFlds)
     throws IOException,
 	   MapUtilsException, 
 	   InvalidRelation
     {
-      short [] sizesT1 = new short [len_in1];
+
+      AttrType in1[] = {new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrString),
+        new AttrType(AttrType.attrInteger),
+        new AttrType(AttrType.attrString)};
+      short [] sizesT1 = new short [4];
       int i, count = 0;
       
-      for (i = 0; i < len_in1; i++)
+      for (i = 0; i < 4; i++)
         if (in1[i].attrType == AttrType.attrString)
 	        sizesT1[i] = t1_str_sizes[count++];
       
       int n_strs = 0; 
       for (i = 0; i < nOutFlds; i++)
-	{
-	  if (proj_list[i].relation.key == RelSpec.outer) 
-            res_attrs[i] = new AttrType(in1[proj_list[i].offset-1].attrType);
-	  
-	  else throw new InvalidRelation("Invalid relation -innerRel");
-	}
+      {
+        if (proj_list[i].relation.key == RelSpec.outer) 
+          res_attrs[i] = new AttrType(in1[proj_list[i].offset-1].attrType);
+        
+        else throw new InvalidRelation("Invalid relation -innerRel");
+      }
       
       // Now construct the res_str_sizes array.
-      for (i = 0; i < nOutFlds; i++){
-	  if (proj_list[i].relation.key == RelSpec.outer
-	      && in1[proj_list[i].offset-1].attrType == AttrType.attrString)
-	    n_strs++;
-	}
+      for (i = 0; i < nOutFlds; i++)
+      {
+        if (proj_list[i].relation.key == RelSpec.outer
+            && in1[proj_list[i].offset-1].attrType == AttrType.attrString)
+          n_strs++;
+      }
       
       short[] res_str_sizes = new short [n_strs];
       count         = 0;
       for (i = 0; i < nOutFlds; i++) {
-	if (proj_list[i].relation.key ==RelSpec.outer
-	    && in1[proj_list[i].offset-1].attrType ==AttrType.attrString)
-	  res_str_sizes[count++] = sizesT1[proj_list[i].offset-1];
+        if (proj_list[i].relation.key ==RelSpec.outer
+            && in1[proj_list[i].offset-1].attrType ==AttrType.attrString)
+          res_str_sizes[count++] = sizesT1[proj_list[i].offset-1];
       }
      
       try {
-	Jtuple.setHdr( res_str_sizes);
+	      Jtuple.setHdr(res_str_sizes);
       }catch (Exception e){
-	throw new MapUtilsException(e,"setHdr() failed");
+	      throw new MapUtilsException(e,"setHdr() failed");
       } 
       return res_str_sizes;
     }
 }
+
 
 
 

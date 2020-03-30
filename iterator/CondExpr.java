@@ -14,15 +14,15 @@ public class CondExpr {
   /**
    * Operator like "<"
    */
-  public AttrOperator op;    
+  public AttrOperator op; 
+  public int fldNo;  
   
   /**
    * Types of operands, Null AttrType means that operand is not a
    * literal but an attribute name
    */    
-  public int     field;
-  public AttrType type1;
-  public AttrType type2;
+  public AttrType     type1;
+  public AttrType     type2;    
  
   /**
    *the left operand and right operand 
@@ -33,15 +33,13 @@ public class CondExpr {
   /**
    * Pointer to the next element in linked list
    */    
-  public CondExpr    next;
+  public CondExpr    next;   
   
   /**
    *constructor
    */
   public  CondExpr() {
     
-    
-
     operand1 = new Operand();
     operand2 = new Operand();
     

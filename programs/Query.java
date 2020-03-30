@@ -37,11 +37,11 @@ public class Query {
 
         SystemDefs s = new SystemDefs(fpath+tableName, 1000, numbf, "Clock");
         f = new bigt("file_1",type);
-        stream = f.openStream(order, rowFilter, columnFilter, valueFilter);
+        // stream = f.openStream(order, rowFilter, columnFilter, valueFilter);
         Map map = new Map();
         boolean done = false;
         while(!done){
-            map = stream.getNext(mid);
+            // map = stream.getNext(mid);
             if(map == null){
                 done = true;
             }else{

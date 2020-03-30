@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import global.ConvertMap;
 import global.GlobalConst;
+import iterator.MapUtilsException;
 
 /** A unit of storing values in bigt.
 *
@@ -282,13 +283,22 @@ public class Map implements GlobalConst{
 
     /**
      * set the column label of a map
+     * 
      * @param frommap of type byte
-     * @param offset of type int
+     * @param offset  of type int
+     * @throws IOException
      */
 
-    public void mapSet(byte[] frommap, int offset) {
-        System.arraycopy(frommap, offset, data, 0, fldOffset[4] - map_offset);
-        map_offset = 0;
+    public void mapSet(byte[] frommap, int offset) throws IOException {
+        try{
+            Map am = new Map(frommap, offset);
+            am.mapSetup();
+            short[] copyFldOs = am.getFldOffset();
+            System.arraycopy(frommap, offset, data, 0, copyFldOs[4] - offset);
+            map_offset = 0;
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -396,4 +406,26 @@ public class Map implements GlobalConst{
         System.arraycopy(data, 8, tmp, 0, 2);
         fldOffset[4] = ConvertMap.getShortValue(0, tmp);
     }
+
+    public String getStrFld(int fld_no) throws IOException, MapUtilsException {
+        String temp;
+        switch (fld_no) {
+            case 1:
+                temp = getRowLabel();
+                break;
+            case 2:
+                temp = getColumnLabel();
+                break;
+            case 4:
+                temp = getValue();
+                break;
+            default:
+                throw new MapUtilsException("invalid field");
+        }
+        return temp;
+    }
+
+	// public void mapSet(byte[] frommap, int offset, int map_length) {
+
+	// }
 }
