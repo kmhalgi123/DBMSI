@@ -35,7 +35,7 @@ public class BatchInsert {
                 String que = sc.nextLine();
                 String[] words = que.split("\\s+");
                 if (words[0].equals("batchinsert")) {
-                    String filepath = "/home/kaushal/DBMSI/Phase2/project2_testdata2.csv"; //words[1];
+                    String filepath = "/home/kaushal/DBMSI/Phase2/test_data_1a_1.csv"; //words[1];
                     int type = 1;// Integer.parseInt(words[2]);
                     String dbname = "bd";//words[3];
                     SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, 500, "Clock");
@@ -345,36 +345,36 @@ public class BatchInsert {
 
                     StringTokenizer sv = new StringTokenizer(token);
                     String rowLabel = sv.nextToken(",");
-                    maplength += (rowLabel.getBytes().length + 2);
+                    maplength += 34; //(rowLabel.getBytes().length + 2);
 
                     String columnLabel = sv.nextToken(",");
-                    maplength += (columnLabel.getBytes().length + 2);
+                    maplength += 34; //(columnLabel.getBytes().length + 2);
 
                     int timeStamp = Integer.parseInt(sv.nextToken(","));
                     maplength += 4;
 
                     String value = sv.nextToken(",");
-                    maplength += (value.getBytes().length + 2);
+                    maplength += 34; //(value.getBytes().length + 2);
 
                     byte[] mapData = new byte[maplength + 10];
 
                     int position = 10;
                     ConvertMap.setStrValue(rowLabel, position, mapData);
-                    position += rowLabel.getBytes().length + 2;
+                    position += 34; //rowLabel.getBytes().length + 2;
 
                     ConvertMap.setStrValue(columnLabel, position, mapData);
-                    position += columnLabel.getBytes().length + 2;
+                    position += 34; //columnLabel.getBytes().length + 2;
 
                     ConvertMap.setIntValue(timeStamp, position, mapData);
                     position += 4;
 
                     ConvertMap.setStrValue(value, position, mapData);
-                    position += value.getBytes().length + 2;
+                    position += 34; //value.getBytes().length + 2;
 
                     Map map = new Map(mapData, 0);
 
-                    map.setHdr(new short[] { (short) rowLabel.getBytes().length, (short) columnLabel.getBytes().length,
-                            (short) value.getBytes().length });
+                    map.setHdr(new short[] { 32,32,32}); //(short) rowLabel.getBytes().length, (short) columnLabel.getBytes().length,
+                            //(short) value.getBytes().length });
 
                     MID k = f.insertMap(map.getMapByteArray());
 
@@ -466,12 +466,12 @@ public class BatchInsert {
         proj_list[3]= new FldSpec(rel, 4);
         
         System.out.println(Arrays.toString(select));
-        // Sort s = null;
+        Sort s = null;
 
         FileScan fileScan = new FileScan(filename, 1, new short[]{32,32,32}, 4, proj_list, select);
-        // if (order != 0) {
-        //     s = new Sort(attrType,(short) 4, new short[]{32,32,32}, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300);
-        // }
+        if (order != 0) {
+            s = new Sort(new short[]{32,32,32}, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+        }
         
         Map map = new Map();
         MID mid = new MID();
@@ -479,20 +479,21 @@ public class BatchInsert {
         int c = 0;
         System.out.println();
         while(!done){
-            // if(order == 0){
+            if(order == 0){
                 map = fileScan.get_next();
-            // }
-            // else{
-            //     map = s.get_next();
-            // }
+            }
+            else{
+                map = s.get_next();
+            }
             if(map == null){
                 done = true;
             }else{
                 map.print();
+                // System.out.println(map.getMapByteArray().length);
                 c++;
             }
         }
-        // System.out.println(c);
+        System.out.println(c);
         System.out.println("ReadCount: "+PCounter.rcounter);
         System.out.println("WriteCount: "+PCounter.wcounter);
         System.out.println();

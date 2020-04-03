@@ -3,6 +3,9 @@
 package diskmgr;
 
 import java.io.*;
+import java.sql.Array;
+import java.util.Arrays;
+
 import bufmgr.*;
 import global.*;
 
@@ -971,17 +974,23 @@ class DBHeaderPage implements PageUsedBytes, GlobalConst {
   
   /**
    * return file entry info
-   * @param pageno page Id
+   * 
+   * @param pageno  page Id
    * @param entryNo the file entry number
    * @return file name
-   * @exception IOException I/O errors
-   */  
-  public String getFileEntry(PageId pageNo, int entryNo)
-    throws IOException {
+   * @throws Exception
+   */
+  public String getFileEntry(PageId pageNo, int entryNo) throws IOException {
 
     int position = START_FILE_ENTRIES + entryNo * SIZE_OF_FILE_ENTRY;
     pageNo.pid = ConvertMap.getIntValue (position, data);
-    return (ConvertMap.getStrLabel(position+4, data, MAX_NAME + 2));
+    // System.out.println("BD: "+data.length+" "+position);
+    try{
+      return (ConvertMap.getStrLabel(position+4, data, MAX_NAME + 2));
+    }catch (Exception e){
+      // System.out.println(Arrays.toString(data));
+      return "";
+    }
   }
   
 }

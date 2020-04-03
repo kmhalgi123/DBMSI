@@ -83,6 +83,7 @@ public class bigt implements Filetype, GlobalConst {
                 throw new HFException(null, "can't new page");
             
             add_file_entry(_fileName, _firstDirPageId);
+            System.out.println(_fileName);
             // check error(new exception: Could not add file entry
             
             BigPage firstDirPage = new BigPage();

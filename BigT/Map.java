@@ -17,13 +17,14 @@ public class Map implements GlobalConst{
     public static final int max_size = MINIBASE_PAGESIZE;
     public static int size = 4;
     private int map_offset;
+    public int map_length = 116;
     
     /** 
      * private field
      * offset of the fields
     */
     
-    private short[] fldOffset;
+    private short[] fldOffset = new short[5];;
 
 
     /**
@@ -241,6 +242,9 @@ public class Map implements GlobalConst{
 
     public short size(){
         // return ((short) (fldOffset[4] - map_offset));
+        if(fldOffset[4] != 0){
+            return (short)(fldOffset[4] - map_offset);
+        }
         return (short) (data.length - map_offset);
     }
 
@@ -289,12 +293,9 @@ public class Map implements GlobalConst{
      * @throws IOException
      */
 
-    public void mapSet(byte[] frommap, int offset) throws IOException {
+    public void mapSet(byte[] frommap, int offset, int map_length) throws IOException {
         try{
-            Map am = new Map(frommap, offset);
-            am.mapSetup();
-            short[] copyFldOs = am.getFldOffset();
-            System.arraycopy(frommap, offset, data, 0, copyFldOs[4] - offset);
+            System.arraycopy(frommap, offset, data, 0, map_length);
             map_offset = 0;
         } catch(Exception e){
             e.printStackTrace();
@@ -308,10 +309,14 @@ public class Map implements GlobalConst{
      * @exception IOException
      */
 
-    public void setFldOffsetData(short[] fldOffset){ 
+    public void setFldOffsetData(short[] fldOffset) throws IOException {
+        int pos = 0;
         for (int i=0; i<fldOffset.length; i++) {
             this.fldOffset[i] = fldOffset[i];
+            ConvertMap.setShortValue(this.fldOffset[i], map_offset+pos, data);
+            pos+=2;
         }
+        
     }
 
     /**
@@ -388,7 +393,7 @@ public class Map implements GlobalConst{
         //ConvertMap.setShortValue((short) 4, map_offset, data);
         int pos = map_offset+2; 
         // short incr;
-        fldOffset = new short[5];
+        
         // fldOffset[0] = (short) (map_offset+10);
         byte tmp[] = new byte[2];
         System.arraycopy(data, 0, tmp, 0, 2);

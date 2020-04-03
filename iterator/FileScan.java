@@ -132,7 +132,7 @@ public class FileScan extends  Iterator
 	
         tuple1.mapSetup();
         if (PredEval.Eval(OutputFilter, tuple1, null) == true){
-          Projection.Project(tuple1,  Jtuple, perm_mat, nOutFlds); 
+          Projection.Project(tuple1, Jtuple, perm_mat, nOutFlds); 
           return  Jtuple;
         }        
       }
