@@ -27,6 +27,9 @@ public class BatchInsert {
     // query bigtable2 2 0 * Lion * 100
     // java programs.BatchInsert 
 
+    //range queries
+    //  
+
     public static void main(String[] args) {
 
         PCounter.initialize();
@@ -220,7 +223,7 @@ public class BatchInsert {
                             c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
                             c.operand2.string = words[6].substring(0, words[6].length() - 1);
                             select.add(c);
-                            bufpage = Integer.parseInt(words[9]);
+                            //bufpage = Integer.parseInt(words[9]);
                             if (words[7].charAt(0) == '[') {
 
                                 // valFilter = words[7] + words[8];
@@ -241,7 +244,7 @@ public class BatchInsert {
                                 c.operand2.string = words[8].substring(0, words[8].length() - 1);
                                 select.add(c);
                                 bufpage = Integer.parseInt(words[9]);
-                                bufpage = Integer.parseInt(words[9]);
+                                //bufpage = Integer.parseInt(words[9]);
                             } else {
                                 valFilter = words[7];
                                 if (!valFilter.equals("*")) {
@@ -475,6 +478,79 @@ public class BatchInsert {
 
         return true;
     }
+    static void mapsprinter(Map m, String rowlabel1, String rowlabel2, String columnlabel1, String columnlabel2, String value1, String value2)
+            throws IOException {
+        
+
+        if(!rowlabel2.equals("")){
+            if(( ((m.getRowLabel().compareTo(rowlabel1)>0) && (m.getRowLabel().compareTo(rowlabel2))<0 ) || rowlabel1.equals(""))
+            && (  m.getColumnLabel().equals(columnlabel1) || columnlabel1.equals(""))
+            && (  m.getValue().equals(value1) || value1.equals(""))
+            ) {
+            m.print();
+        }         
+        }
+        if(!columnlabel2.equals("")){
+            if( (m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+            && ( ((m.getColumnLabel().compareTo(columnlabel1)>0) && (m.getColumnLabel().compareTo(columnlabel2))<0 ) || columnlabel1.equals(""))
+            && (  m.getValue().equals(value1) || value1.equals(""))
+            ) {
+            m.print();
+        }         
+        }
+
+        if(!value2.equals("")){
+            if( (m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+            && ( m.getColumnLabel().equals(columnlabel1)  || columnlabel1.equals(""))
+            && (  ((m.getValue().compareTo(value1)>0) && (m.getValue().compareTo(value2))<0 ) || value1.equals(""))
+            ) {
+            m.print();
+        }
+        }
+
+        if(!rowlabel2.equals("") && !columnlabel2.equals("")){
+            if ( (((m.getRowLabel().compareTo(rowlabel1)>0) && (m.getRowLabel().compareTo(rowlabel2))<0 ) || rowlabel1.equals(""))
+            && ( ((m.getColumnLabel().compareTo(columnlabel1)>0) && (m.getColumnLabel().compareTo(columnlabel2))<0 ) || columnlabel1.equals(""))
+            && (  m.getValue().equals(value1) || value1.equals(""))
+            ) {
+            m.print();
+        }         
+        }
+ 
+        if(!rowlabel2.equals("") && !value2.equals("")){
+            if ( (((m.getRowLabel().compareTo(rowlabel1)>0) && (m.getRowLabel().compareTo(rowlabel2))<0 ) || rowlabel1.equals(""))
+            && ( (( m.getColumnLabel().equals(columnlabel1)  ) || columnlabel1.equals("")))
+            && (  ((m.getValue().compareTo(value1)>0) && (m.getValue().compareTo(value2))<0 )|| value1.equals(""))
+            ) {
+            m.print();
+        }         
+        }
+
+        if(!columnlabel2.equals("") && !value2.equals("")){
+            if( (m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+            && ( ((m.getColumnLabel().compareTo(columnlabel1)>0) && (m.getColumnLabel().compareTo(columnlabel2))<0 ) || columnlabel1.equals(""))
+            && (  ((m.getValue().compareTo(value1)>0) && (m.getValue().compareTo(value2))<0 )|| value1.equals(""))
+            ) {
+            m.print();
+        }         
+        }
+        
+        
+        if(( ((m.getRowLabel().compareTo(rowlabel1)>0) && (m.getRowLabel().compareTo(rowlabel2))<0 ) || rowlabel1.equals(""))
+            && ( ((m.getColumnLabel().compareTo(columnlabel1)>0) && (m.getColumnLabel().compareTo(columnlabel2))<0 ) || columnlabel1.equals(""))
+            && ( ((m.getValue().compareTo(value1)>0) && (m.getValue().compareTo(value2))<0 ) || value1.equals(""))
+            ) {
+            m.print();
+            }
+
+        if((m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+            && (m.getColumnLabel().equals(columnlabel1) || columnlabel1.equals(""))  
+            && (m.getValue().equals(value1) || value1.equals(""))
+            ){
+            m.print();
+        }
+        
+    }
 
     public static boolean query(String filename, int type, int order, CondExpr[] select, String Bigtablename)
             throws LowMemException, Exception {
@@ -495,7 +571,7 @@ public class BatchInsert {
             attrType[1] = new AttrType(AttrType.attrString);
             attrType[2] = new AttrType(AttrType.attrInteger);
             attrType[3] = new AttrType(AttrType.attrString);
-
+ 
             proj_list[0] = new FldSpec(rel, 1);
             proj_list[1] = new FldSpec(rel, 2);
             proj_list[2] = new FldSpec(rel, 3);
@@ -532,6 +608,9 @@ public class BatchInsert {
         BTreeFile btf;
         
         // OUR CODE 
+
+        
+
         if (type == 2) {
             btf = new BTreeFile("Adithya");
 
@@ -540,7 +619,334 @@ public class BatchInsert {
             attrSize[1] = 15;
             attrSize[2] = 4;
             attrSize[3] = 15; 
-            select[1] = null;
+
+            
+            String rowlabel1="", rowlabel2="", columnlabel1="", columnlabel2="", value1="", value2="";
+            
+            // try {
+            //     rowlabel = select[0].operand2.string;    
+            // } catch (Exception e) {
+            //     rowlabel = "";
+            // }
+            // try {
+            //     columnlabel = select[1].operand2.string;    
+            // } catch (Exception e) {
+            //     columnlabel = ""; 
+            // }
+            // try {
+            //     value = select[2].operand2.string;    
+                
+            // } catch (Exception e) {
+            //     value = "";
+            // }
+
+            //getting rowlabels, column labels, value from selects
+            int a;
+            // try {
+            //     a = select[0].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[0].op.attrOperator = 4;
+            // }
+            // try {
+            //     a = select[1].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[1].op.attrOperator = 4;
+            // }
+            // try {
+            //     a = select[2].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[2].op.attrOperator = 4;
+            // }
+            // try {
+            //     a = select[3].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[3].op.attrOperator = 4;
+            // }
+            // try {
+            //     a = select[4].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[4].op.attrOperator = 4;
+            // }
+            // try {
+            //     a = select[5].op.attrOperator;
+            // } catch (Exception e) {
+            //     select[5].op.attrOperator = 4;
+            // }
+            int b, c;
+            if (select[0].op.attrOperator==2) {
+                
+                try{
+                b =select[2].op.attrOperator; 
+                }
+                catch(Exception e){
+                    b = 0;
+                }
+                if (b==2) {
+                   try {
+                       c = select[4].op.attrOperator; 
+                   } catch (Exception e) {
+                       c = 0;
+                   }
+                    if (c==2) {
+                        try {
+                            rowlabel1 = select[0].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel1 = "";
+                        }
+                        try {
+                            rowlabel2 = select[1].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel2 = "";
+                        }
+                        try {
+                            columnlabel1 = select[2].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel1 = "";
+                        }
+                        try {
+                            columnlabel2 = select[3].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel2 = "";
+                        }
+                        try {
+                            value1 = select[4].operand2.string;    
+                        } catch (Exception e) {
+                            value1 = "";
+                        }
+                        try {
+                            value2 = select[5].operand2.string;    
+                        } catch (Exception e) {
+                            value2 = "";
+                        }
+                        
+                    } else {
+                        try {
+                            rowlabel1 = select[0].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel1 = "";
+                        }
+                        try {
+                            rowlabel2 = select[1].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel2 = "";
+                        }
+                        try {
+                            columnlabel1 = select[2].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel1 = "";
+                        }
+                        try {
+                            columnlabel2 = select[3].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel2 = "";
+                        }
+                        try {
+                            value1 = select[4].operand2.string;    
+                        } catch (Exception e) {
+                            value1 = "";
+                        }
+                        
+
+                        }
+                    }
+                 else {
+                    
+                    if (select[3].op.attrOperator==2) {
+                        try {
+                            rowlabel1 = select[0].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel1 = "";
+                        }
+                        try {
+                            rowlabel2 = select[1].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel2 = "";
+                        }
+                        try {
+                            columnlabel1 = select[2].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel1 = "";
+                        }
+                        try {
+                            value1 = select[3].operand2.string;    
+                        } catch (Exception e) {
+                            //TODO: handle exception
+                        }
+                        try {
+                            value2 = select[4].operand2.string;    
+                        } catch (Exception e) {
+                            value2 = "";
+                        }
+                        
+                      
+                    } else {
+                        try {
+                            rowlabel1 = select[0].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel1 = "";
+                        }
+                        try {
+                            rowlabel2 = select[1].operand2.string;    
+                        } catch (Exception e) {
+                            rowlabel2 = "";
+                        }
+                        try {
+                            columnlabel1 = select[2].operand2.string;    
+                        } catch (Exception e) {
+                            columnlabel1 = "";
+                        }
+                        try {
+                            value1 = select[3].operand2.string;    
+                        } catch (Exception e) {
+                            value1 = "";
+                        }
+                      
+                        }
+                    }
+                }
+            
+             else {
+                
+                if (select[0].op.attrOperator == 0) {
+                   
+                    try {
+                        b = select[1].op.attrOperator;
+                    } catch (Exception e) {
+                        b = 0;
+                    }
+                    if (b == 2) {
+                        try {
+                            c  = select[3].op.attrOperator;    
+                        } catch (Exception e) {
+                            c = 0;
+                        }
+                        
+                        if (c == 2) {
+                            try {
+                                rowlabel1 = select[0].operand2.string;
+                            } catch (Exception e) {
+                                rowlabel1 = "";
+                            }
+                            try {
+                                columnlabel1 = select[1].operand2.string;    
+                            } catch (Exception e) {
+                                columnlabel1 = "";
+                            }
+                            try {
+                                columnlabel2 = select[2].operand2.string;    
+                            } catch (Exception e) {
+                                columnlabel2 = "";
+                            }
+                            try {
+                                value1 = select[3].operand2.string;    
+                            } catch (Exception e) {
+                                value1 = "";
+                            }
+                            try {
+                                value2 = select[4].operand2.string;    
+                            } catch (Exception e) {
+                                value2 = "";
+                            }
+                            
+
+                        } else {
+                            try {
+                                rowlabel1 = select[0].operand2.string;
+                            } catch (Exception e) {
+                                rowlabel1 = "";
+                            }
+                            try {
+                                columnlabel1 = select[1].operand2.string;    
+                            } catch (Exception e) {
+                                columnlabel1 = "";
+                            }
+                            try {
+                                columnlabel2 = select[2].operand2.string;
+                            } catch (Exception e) {
+                                columnlabel2 = "";
+                            }
+                            try {
+                                value1 = select[3].operand2.string;
+                            } catch (Exception e) {
+                                value1 = "";
+                            }
+                            
+                        }
+                    } else {
+                        try {
+                            b = select[2].op.attrOperator;    
+                        } catch (Exception e) {
+                            b = 0;
+                        }
+                        
+                        if (b == 2) {
+                            try {
+                                rowlabel1 = select[0].operand2.string;    
+                            } catch (Exception e) {
+                                rowlabel1 = "";
+                            }
+                            try {
+                                columnlabel1 = select[1].operand2.string;    
+                            } catch (Exception e) {
+                                columnlabel1 = "";
+                            }
+                            try {
+                                value1 = select[2].operand2.string;    
+                            } catch (Exception e) {
+                                value1 = "";
+                            }
+                            try {
+                                value2 = select[3].operand2.string;    
+                            } catch (Exception e) {
+                                value2 = "";
+                            }
+                            
+                        }
+                        try {
+                            b = select[2].op.attrOperator;    
+                        } catch (Exception e) {
+                            b = 0;
+                        }
+                        
+                        if (b == 0) {
+                            try {
+                                rowlabel1 = select[0].operand2.string;    
+                            } catch (Exception e) {
+                                rowlabel1 = "";
+                            }
+                            
+                            try {
+                                columnlabel1 = select[1].operand2.string;    
+                            } catch (Exception e) {
+                                columnlabel1 = "";
+                            }
+                            
+                            try {
+                                value1 = select[2].operand2.string;    
+                            } catch (Exception e) {
+                                value1 = "";
+                            }
+                            
+                        }
+                    }
+               
+            }
+            }
+
+             System.out.println(columnlabel1);
+             System.out.println(rowlabel1);
+             System.out.println(value1);
+
+
+
+             try {
+                if (select[1].op.attrOperator == 0) {
+                    select[1] = null;
+            }   
+             } catch (Exception e) {
+                 select[1] = null;
+             }
+
             IndexScan indexScan = null;
 
             Map m = null, m1 = null;
@@ -555,7 +961,19 @@ public class BatchInsert {
 
                 m = indexScan.get_next();
                 m.mapSetup();
-                m.print();
+                // System.out.println(m.getColumnLabel());
+                // System.out.println(m.getRowLabel());
+                // System.out.println(m.getValue());
+                
+                
+                
+                // if((m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+                //     && (m.getColumnLabel().equals(columnlabel1) || columnlabel1.equals(""))  
+                //     && (m.getValue().equals(value1) || value1.equals(""))
+                //     ){
+                //     m.print();
+                // }
+                mapsprinter(m, rowlabel1, rowlabel2, columnlabel1, columnlabel2, value1, value2);
 
                 m1 = new Map(m);
                 m1.mapSetup();
@@ -567,8 +985,14 @@ public class BatchInsert {
                     if(MapUtils.Equal(m, m1)){
                         break;
                     }
-                    m.print();
 
+                //     if((m.getRowLabel().equals(rowlabel1) || rowlabel1.equals(""))
+                //     && (m.getColumnLabel().equals(columnlabel1) || columnlabel1.equals(""))  
+                //     && (m.getValue().equals(value1) || value1.equals(""))
+                //     ){
+                //     m.print();
+                // }
+                mapsprinter(m,rowlabel1, rowlabel2, columnlabel1, columnlabel2, value1, value2);
                     m1 = new Map(m);
                     m1.mapSetup();
                     

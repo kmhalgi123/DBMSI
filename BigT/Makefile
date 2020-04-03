@@ -1,5 +1,5 @@
-JDKPATH = /usr/lib/jvm/java-11-oracle
-LIBPATH = /home/anupriya/DBMSI/DBMSI
+JDKPATH = /usr/lib/jvm/java-8-openjdk-amd64
+LIBPATH = /Downloads/DBMSI
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
