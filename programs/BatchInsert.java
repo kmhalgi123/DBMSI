@@ -1,13 +1,14 @@
 package programs;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
 // import global.*;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.Iterator;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.io.*;
 
 import BigT.*;
+import BigT.Map;
 import btree.*;
 import bufmgr.*;
 import diskmgr.PCounter;
@@ -19,10 +20,10 @@ public class BatchInsert {
     //static String fpath = "/home/user/Desktop/";
     static String fpath = "";
     static bigt f = null;
-    String dbFileName = "project2_testdata.csv";
+    String dbFileName = "project2_testdata_original.csv";
 
-    // batchinsert project2_testdata.csv 2 bigtable2
-    // query bigtable2 2 0 Alaska Baboon 67 100
+    // batchinsert project2_testdata.csv 3 bigtable2
+    // query bigtable2 3 0 Alaska Wren 67 100
     // query bigtable2 2 0 Singapore Camel 9300 100
     // query bigtable2 2 0 * Lion * 100
     // java programs.BatchInsert 
@@ -356,15 +357,27 @@ public class BatchInsert {
             btf = new BTreeFile("Adithya", 0, 100, 0);
             btf2 = new BTreeFile("AAAa", 1, 100, 0);
 
-            // String line = bin.readLine();
-            String line;
             int maplength = 0;
             int count = 0;
             StringTokenizer st;
             System.out.println("Batch Inserting records! Wait for few minutes!");
-            while ((line = bin.readLine()) != null) {
-                // System.out.println(line);
-                st = new StringTokenizer(line);
+         
+            //New batchinsert
+            List<String> lines = Collections.emptyList();
+            try {
+                lines = Files.readAllLines(Paths.get(filepath), StandardCharsets.UTF_8);
+            }
+    
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            // System.out.println(lines.get(3));
+
+            // while ((line = bin.readLine()) != null) {
+                for(String str: lines)
+                {
+                // System.out.println(str);
+                st = new StringTokenizer(str);
 
                 while (st.hasMoreTokens()) {
                     String token = st.nextToken();
@@ -444,19 +457,18 @@ public class BatchInsert {
                 count++;
                 // System.out.println(count);
             }
-            System.out.println("Hello " + f.getMapCnt());
+            System.out.println("Map count " + f.getMapCnt());
 
             //file2 = new BTreeFile("Adithya", 0, 100, 0);
-            file2 = new BTreeFile("Adithya");
-            BT.printBTree(btf.getHeaderPage());
-            BT.printAllLeafPages(btf.getHeaderPage());
-            // BT.printBTree(btf.new_scan(lo_key, hi_key));
+            // file2 = new BTreeFile("Adithya");
+            // BT.printBTree(btf.getHeaderPage());
+            // BT.printAllLeafPages(btf.getHeaderPage());
 
             if (type == 4 || type == 5) {
                 //file3 = new BTreeFile("AAAa", 1, 100, 0);
-                file3 = new BTreeFile("AAAa");
-                BT.printBTree(btf2.getHeaderPage());
-                BT.printAllLeafPages(btf2.getHeaderPage());
+                // file3 = new BTreeFile("AAAa");
+                // BT.printBTree(btf2.getHeaderPage());
+                // BT.printAllLeafPages(btf2.getHeaderPage());
             }
 
             bin.close();
