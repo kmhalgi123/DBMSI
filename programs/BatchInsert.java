@@ -1,9 +1,14 @@
 package programs;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 // import global.*;
 import java.util.StringTokenizer;
 
@@ -21,8 +26,8 @@ public class BatchInsert {
     static bigt f = null;
     String dbFileName = "project2_testdata.csv";
 
-    // batchinsert project2_testdata.csv 2 bigtable2
-    // query bigtable2 2 0 Alaska Baboon 67 100
+    // batchinsert project2_testdata.csv 3 bigtable2
+    // query bigtable2 3 0 Alaska Wren 67 100
     // query bigtable2 2 0 Singapore Camel 9300 100
     // query bigtable2 2 0 * Lion * 100
     // java programs.BatchInsert 
@@ -362,6 +367,22 @@ public class BatchInsert {
             int count = 0;
             StringTokenizer st;
             System.out.println("Batch Inserting records! Wait for few minutes!");
+
+            // List<String> lines = Collections.emptyList();
+            // try {
+            //     lines = Files.readAllLines(Paths.get(filepath), StandardCharsets.UTF_8);
+            // }
+    
+            // catch (IOException e) {
+    
+            //     // do something
+            //     e.printStackTrace();
+            // }
+            // System.out.println("Hey this is new one!");
+            // System.out.println(lines.get(3));
+    
+
+
             while ((line = bin.readLine()) != null) {
                 // System.out.println(line);
                 st = new StringTokenizer(line);
@@ -444,7 +465,7 @@ public class BatchInsert {
                 count++;
                 // System.out.println(count);
             }
-            System.out.println("Hello " + f.getMapCnt());
+            System.out.println("Map Count " + f.getMapCnt());
 
             //file2 = new BTreeFile("Adithya", 0, 100, 0);
             file2 = new BTreeFile("Adithya");
