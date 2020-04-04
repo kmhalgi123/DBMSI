@@ -21,8 +21,8 @@ public class BatchInsert {
     static bigt f = null;
     String dbFileName = "project2_testdata.csv";
 
-    // batchinsert project2_testdata.csv 5 bigtable2
-    // query bigtable2 5 0 Alaska Baboon 67 100
+    // batchinsert project2_testdata.csv 2 bigtable2
+    // query bigtable2 2 0 Alaska Baboon 67 100
     // query bigtable2 2 0 Singapore Camel 9300 100
     // query bigtable2 2 0 * Lion * 100
     // java programs.BatchInsert 
