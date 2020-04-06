@@ -35,12 +35,12 @@ public class BatchInsert {
                 String que = sc.nextLine();
                 String[] words = que.split("\\s+");
                 if (words[0].equals("batchinsert")) {
-                    String filepath = "/home/kaushal/DBMSI/Phase2/test_data_1a_1.csv"; //words[1];
-                    int type = 1;// Integer.parseInt(words[2]);
-                    String dbname = "bd";//words[3];
+                    String filepath = words[1];
+                    int type = Integer.parseInt(words[2]);
+                    String dbname = words[3];
                     SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, 500, "Clock");
                     try {
-                        f = new bigt(dbname + "_" + String.valueOf(type), type);
+                        f = new bigt(dbname + "_" + String.valueOf(type));
                     } catch (Exception e) {
                         // status = FAIL;
                         System.err.println("*** Could not create heap file\n");
@@ -289,7 +289,7 @@ public class BatchInsert {
                         }
                     }
                     // SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, bufpage, "Clock");
-                    f = new bigt(dbname + String.valueOf(type), type);
+                    f = new bigt(dbname + String.valueOf(type));
                     CondExpr[] newSel = new CondExpr[select.size()+1];
                     for(int i = 0;i< select.size();i++){
                         newSel[i] = select.get(i);
@@ -325,7 +325,7 @@ public class BatchInsert {
             BTreeFile btf2 = null;
             BTreeFile file2, file3;
 
-            f = new bigt(dbFileName+"_"+String.valueOf(type),type);
+            f = new bigt(dbFileName+"_"+String.valueOf(type));
 
             btf = new BTreeFile("Adithya", 0, 100, 0);
             btf2 = new BTreeFile("AAAa", 1, 100, 0);
@@ -400,7 +400,7 @@ public class BatchInsert {
 
                         String key1 = map.getRowLabel();
                         String key2 = map.getColumnLabel();
-                        String key = key1 + key2;
+                        String key = key2 + key1;
                         int keyt = map.getTimeStamp();
                         // System.out.println(keyt);
                         btf.insert(new StringKey(key), k);
@@ -408,7 +408,7 @@ public class BatchInsert {
                     }
                     if (type == 5) {
                         String key1 = map.getRowLabel();
-                        String key2 = map.getColumnLabel();
+                        String key2 = map.getValue();
                         String key = key1 + key2;
                         int keyt = map.getTimeStamp();
                         btf.insert(new StringKey(key), k);
@@ -422,19 +422,22 @@ public class BatchInsert {
             }
             System.out.println("Hello "+ f.getMapCnt());
 
-            file2 = new BTreeFile("Adithya", 0, 100, 0);
+            file2 = new BTreeFile("Adithya");
             BT.printBTree(btf.getHeaderPage());
             BT.printAllLeafPages(btf.getHeaderPage());
             // BT.printBTree(btf.new_scan(lo_key, hi_key));
 
-            file3 = new BTreeFile("AAAa", 1, 100, 0);
-            BT.printBTree(btf2.getHeaderPage());
-            BT.printAllLeafPages(btf2.getHeaderPage());
-            bin.close();
+            if (type == 4 || type == 5) {
+                //file3 = new BTreeFile("AAAa", 1, 100, 0);
+                file3 = new BTreeFile("AAAa");
+                BT.printBTree(btf2.getHeaderPage());
+                BT.printAllLeafPages(btf2.getHeaderPage());
+            }
+
 
             System.out.println("Read counts: "+PCounter.rcounter);
             System.out.println("Write counts: "+PCounter.wcounter);
-
+            bin.close();
             System.out.println("Batchinsert finished!");
 
         } catch (Exception e) {
@@ -453,6 +456,13 @@ public class BatchInsert {
             throws LowMemException, Exception {
         // Stream s = f.openStream(order, rowFilter, colFilter, valFilter);
         PCounter.initialize();
+        int c = 0;
+        CondExpr[] indexSelect = new CondExpr[2];
+        indexSelect[0] = null;
+        indexSelect[1] = null;
+
+        short[] s_sizes = {32,32,32};
+
         AttrType[] attrType = new AttrType[4];
         attrType[0] = new AttrType(AttrType.attrString);
         attrType[1] = new AttrType(AttrType.attrString);
@@ -464,39 +474,299 @@ public class BatchInsert {
         proj_list[1]= new FldSpec(rel, 2);
         proj_list[2]= new FldSpec(rel, 3);
         proj_list[3]= new FldSpec(rel, 4);
-        
-        System.out.println(Arrays.toString(select));
+        short[] attrSize = {32,32,32};
+        BTreeFile btf;
+        boolean done = false;
         Sort s = null;
 
-        FileScan fileScan = new FileScan(filename, 1, new short[]{32,32,32}, 4, proj_list, select);
-        if (order != 0) {
-            s = new Sort(new short[]{32,32,32}, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+        if (type == 1){
+            
+            
+            System.out.println(Arrays.toString(select));
+            
+
+            FileScan fileScan = new FileScan(filename, 1, new short[]{32,32,32}, 4, proj_list, select);
+            if (order != 0) {
+                s = new Sort(s_sizes, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+            }
+            
+            Map map = new Map();
+            MID mid = new MID();
+            
+            System.out.println();
+            while(!done){
+                if(order == 0){
+                    map = fileScan.get_next();
+                }
+                else{
+                    map = s.get_next();
+                }
+                if(map == null){
+                    done = true;
+                }else{
+                    map.print();
+                    // System.out.println(map.getMapByteArray().length);
+                    c++;
+                }
+            }
+            try {
+                fileScan.close();
+                if(s != null){
+                    s.close();
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
         
-        Map map = new Map();
-        MID mid = new MID();
-        boolean done = false;
-        int c = 0;
-        System.out.println();
-        while(!done){
-            if(order == 0){
-                map = fileScan.get_next();
+        if (type == 2) {
+            btf = new BTreeFile("Adithya");
+            if (select != null){
+                int i = 0;
+                for(CondExpr condExpr : select){
+                    if (condExpr != null){
+                        if(condExpr.fldNo == 1){
+                            if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                                indexSelect[0] = condExpr;
+                                indexSelect[1] = null;
+                            }else{
+                                indexSelect[i] = condExpr;
+                                i++;
+                            }
+                        }
+                    }
+                }
             }
-            else{
-                map = s.get_next();
-            }
-            if(map == null){
-                done = true;
-            }else{
-                map.print();
-                // System.out.println(map.getMapByteArray().length);
-                c++;
+            try{
+                IndexScan indexScan = null;
+                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if(order != 0){
+                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                }
+                Map map = new Map();
+                System.out.println();
+                while(!done){
+                    
+                    if(order == 0){
+                        map = indexScan.get_next();
+                    }
+                    else{
+                        map = s.get_next();
+                    }
+                    if(map == null){
+                        done = true;
+                    }else{
+                        map.print();
+                        c++;
+                    }
+                    
+                }
+                
+                btf.close();
+                btf.destroyFile();
+                try {
+                    indexScan.close();
+                    if(s != null){
+                        s.close();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
-        System.out.println(c);
-        System.out.println("ReadCount: "+PCounter.rcounter);
-        System.out.println("WriteCount: "+PCounter.wcounter);
+
+        if (type == 3) {
+            btf = new BTreeFile("Adithya");
+
+            // select[0] = select[1];
+            // select[1] = null;
+            if (select != null){
+                int i = 0;
+                for(CondExpr condExpr : select){
+                    if (condExpr != null){
+                        if(condExpr.fldNo == 2){
+                            if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                                indexSelect[0] = condExpr;
+                                indexSelect[1] = null;
+                            }else{
+                                indexSelect[i] = condExpr;
+                                i++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            try{
+                IndexScan indexScan = null;
+                indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if(order != 0){
+                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                }
+                Map map = new Map();
+                System.out.println();
+                while(!done){
+                    
+                    if(order == 0){
+                        map = indexScan.get_next();
+                    }
+                    else{
+                        map = s.get_next();
+                    }
+                    if(map == null){
+                        done = true;
+                    }else{
+                        map.print();
+                        c++;
+                    }
+                    
+                }
+                
+                btf.close();
+                btf.destroyFile();
+                try {
+                    indexScan.close();
+                    if(s != null){
+                        s.close();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        //
+        if (type == 4) {
+            btf = new BTreeFile("Adithya");
+            // select = new CondExpr[2];
+            // select[0].operand2.string += select[1].operand2.string;
+
+            if (select != null){
+                int i = 0;
+                // for(CondExpr condExpr : select){
+                //     if (condExpr != null){
+                //         if(condExpr.fldNo == 2){
+                //             if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                //                 indexSelect[0] = condExpr;
+                //                 indexSelect[1] = null;
+                //             }else{
+                //                 indexSelect[i] = condExpr;
+                //                 i++;
+                //             }
+                //         }
+                //     }
+                // }
+            }
+
+            try{
+                IndexScan indexScan = null;
+                indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if(order != 0){
+                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                }
+                Map map = new Map();
+                System.out.println();
+                while(!done){
+                    
+                    if(order == 0){
+                        map = indexScan.get_next();
+                    }
+                    else{
+                        map = s.get_next();
+                    }
+                    if(map == null){
+                        done = true;
+                    }else{
+                        map.print();
+                        c++;
+                    }
+                    
+                }
+                
+                btf.close();
+                btf.destroyFile();
+                try {
+                    indexScan.close();
+                    if(s != null){
+                        s.close();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        if (type == 5) {
+            btf = new BTreeFile("Adithya");
+
+            // select[0].operand2.string += select[2].operand2.string;
+            // select[1] = null;
+            // if (select != null){
+            //     int i = 0;
+            //     for(CondExpr condExpr : select){
+            //         if (condExpr != null){
+            //             if(condExpr.fldNo == 1){
+            //                 if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+            //                     indexSelect[0] = condExpr;
+            //                     indexSelect[1] = null;
+            //                 }else{
+            //                     indexSelect[i] = condExpr;
+            //                     i++;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+
+            try {
+                IndexScan indexScan = null;
+                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if(order != 0){
+                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                }
+                Map map = new Map();
+                System.out.println();
+                while(!done){
+                    
+                    if(order == 0){
+                        map = indexScan.get_next();
+                    }
+                    else{
+                        map = s.get_next();
+                    }
+                    if(map == null){
+                        done = true;
+                    }else{
+                        map.print();
+                        c++;
+                    }
+                    
+                }
+                
+                btf.close();
+                btf.destroyFile();
+                try {
+                    indexScan.close();
+                    if(s != null){
+                        s.close();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        System.out.println("ReadCount: " + PCounter.rcounter);
+        System.out.println("WriteCount: " + PCounter.wcounter);
         System.out.println();
+
         return true;
     }
 }

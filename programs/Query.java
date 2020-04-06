@@ -36,7 +36,7 @@ public class Query {
         if(valueFilter.equals("*")) valueFilter = "";
 
         SystemDefs s = new SystemDefs(fpath+tableName, 1000, numbf, "Clock");
-        f = new bigt("file_1",type);
+        f = new bigt("file_1");
         // stream = f.openStream(order, rowFilter, columnFilter, valueFilter);
         Map map = new Map();
         boolean done = false;

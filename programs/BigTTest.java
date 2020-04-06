@@ -15,7 +15,7 @@ public class BigTTest {
         SystemDefs sysdef = new SystemDefs( m+args[0], 8193,  100, "Clock" );
         bigt f = null;
         try {
-            f = new bigt("file_1", 0);
+            f = new bigt("file_1");
         }
         catch (Exception e) {
             // status = FAIL;

@@ -82,7 +82,7 @@ public class FileScan extends  Iterator
     t1_size = tuple1.size();
     
     try {
-      f = new bigt(file_name, 0);
+      f = new bigt(file_name);
 
     }
     catch(Exception e) {
