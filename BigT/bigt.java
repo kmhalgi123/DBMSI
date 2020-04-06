@@ -319,6 +319,8 @@ public class bigt implements Filetype, GlobalConst {
             
             
             String row,column;
+            //
+            // we have to remove this logic
             thisloop: while(cuDirPageId.pid != INVALID_PAGE)
             {
                 pinPage(cuDirPageId, cuDirPage, false);

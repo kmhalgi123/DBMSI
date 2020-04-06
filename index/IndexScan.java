@@ -72,7 +72,7 @@ public class IndexScan extends Iterator {
     _noOutFlds = noOutFlds;
     map1 = new Map();
     try {
-      System.out.println(str_sizes.length);
+     // System.out.println(str_sizes.length);
       map1.setHdr(str_sizes);
     } catch (Exception e) {
       throw new IndexException(e, "IndexScan.java: Heapfile error");

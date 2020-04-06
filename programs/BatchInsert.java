@@ -22,7 +22,7 @@ public class BatchInsert {
     static bigt f = null;
     String dbFileName = "project2_testdata_original.csv";
 
-    // batchinsert project2_testdata.csv 3 bigtable2
+    // batchinsert project2_testdata.csv 1 bigtable2
     // query bigtable2 3 0 Alaska Wren 67 100
     // query bigtable2 2 0 Singapore Camel 9300 100
     // query bigtable2 2 0 * Lion * 100
@@ -333,7 +333,9 @@ public class BatchInsert {
             e.printStackTrace();
         }
     }
-
+// batchinsert project2_testdata.csv 1 bigtable2
+    // query bigtable2 3 0 Alaska Wren 67 100
+    // query bigtable2 2 0 Singapore Camel 9300 100
     public static boolean batchInsert(String dbFileName, int type, String filepath)
             throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
             InvalidSelectionException, IOException, UnknownKeyTypeException, GetFileEntryException,
@@ -348,6 +350,7 @@ public class BatchInsert {
 
             BTreeFile btf = null;
             BTreeFile btf2 = null;
+            BTreeFile btfTemp = null;
             BTreeFile file2, file3;
 
             //f = new bigt(dbFileName + "_" + String.valueOf(type));
@@ -356,6 +359,7 @@ public class BatchInsert {
 
             btf = new BTreeFile("Adithya", 0, 100, 0);
             btf2 = new BTreeFile("AAAa", 1, 100, 0);
+            btfTemp = new BTreeFile("temp", 0, 100, 0);
 
             int maplength = 0;
             int count = 0;
@@ -419,14 +423,108 @@ public class BatchInsert {
 
                     // System.out.println("Record No: " + count + ", MID: slt: " + k.slotNo + ",
                     // page:" + k.pageNo.pid);
+                    
+                    //add all the maps to bigt
+                    // create an index on rowcolumnvalue
 
-                    // if (type == 1) {
-                    // System.out.println("No type");
-                    // }
+                    // use that index to remove duplicates
+                    
+                    AttrType[] attrType = new AttrType[4];
+                    FldSpec[] proj_list = new FldSpec[4];
+                    RelSpec rel = new RelSpec(RelSpec.outer);
+                    IndexScan indexScan = null;
+                    attrType[0] = new AttrType(AttrType.attrString);
+                    attrType[1] = new AttrType(AttrType.attrString);
+                    attrType[2] = new AttrType(AttrType.attrInteger);
+                    attrType[3] = new AttrType(AttrType.attrString);
+        
+                    proj_list[0] = new FldSpec(rel, 1);
+                    proj_list[1] = new FldSpec(rel, 2);
+                    proj_list[2] = new FldSpec(rel, 3);
+                    proj_list[3] = new FldSpec(rel, 4);
+
+                    short[] attrSize = new short[4];
+                    attrSize[0] = 15;
+                    attrSize[1] = 15;
+                    attrSize[2] = 4;
+                    attrSize[3] = 15; 
+                    // select[1] = null;
+
+                     if (type == 1) {
+                        String key1 = map.getRowLabel();
+                        String key2 = map.getColumnLabel();
+                        //String key3 = map.getValue();
+                        String key = key2+key1;
+                        btfTemp.insert(new StringKey(key), k);
+                        //BT.printAllLeafPages(btfTemp.getHeaderPage());
+                        int t1 = map.getTimeStamp();
+
+                        CondExpr[] expr = new CondExpr[2];
+                        expr[0] = new CondExpr();
+                        expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+                        expr[0].type1 = new AttrType(AttrType.attrSymbol);
+                        expr[0].type2 = new AttrType(AttrType.attrString);
+                        expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+                        expr[0].operand2.string = key;
+                        expr[0].next = null;
+                        expr[1] = null;
+
+                        Map m = null, m1 = null;
+                        int c = 0;
+                        int least=0;
+                        try {
+                        indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), dbFileName, "temp", attrType,
+                        attrSize, 4, 4, proj_list, expr, 10, false);
+
+                        m = indexScan.get_next();
+                        m.mapSetup();
+                        m.print();
+                        c++;
+                        // first map will be least for now
+                        least = m.getTimeStamp();
+                        m1 = new Map(m);
+                        m1.mapSetup();
+        
+                        while (m != null ) {
+                        m = indexScan.get_next();
+                        m.mapSetup();
+                        c++;
+                        // we will find the current least
+                        if(m.getTimeStamp()<least){
+                            least = m.getTimeStamp();
+                            System.out.println(least);
+                        }
+                        
+                        
+                            if(MapUtils.Equal(m, m1)){   
+                                c--;                           
+                                break;
+                            }
+                          
+        
+                            m1 = new Map(m);
+                            m1.mapSetup();
+                            
+                            //m1.print();
+                        }
+                        if(c==3){
+                            //get the map with least time stamp
+                            System.out.println("hello");    
+                        }
+
+                        try {
+                            indexScan.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                     } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    }
+
                     if (type == 2) {
-                        // System.out.println("starting point");
                         String key = map.getRowLabel();
-                        // System.out.println(key);
                         btf.insert(new StringKey(key), k);
 
                     }
@@ -453,23 +551,25 @@ public class BatchInsert {
                         btf2.insert(new IntegerKey(keyt), k);
                     }
 
+                    //MID k = f.insertMap(map.getMapByteArray());
+
                 }
                 count++;
                 // System.out.println(count);
             }
-            System.out.println("Map count " + f.getMapCnt());
+            //System.out.println("Map count " + f.getMapCnt());
 
-            //file2 = new BTreeFile("Adithya", 0, 100, 0);
-            // file2 = new BTreeFile("Adithya");
-            // BT.printBTree(btf.getHeaderPage());
-            // BT.printAllLeafPages(btf.getHeaderPage());
+            // file2 = new BTreeFile("Adithya", 0, 100, 0);
+            // file2 = new BTreeFile("temp");
+            // BT.printBTree(btfTemp.getHeaderPage());
+            // BT.printAllLeafPages(btfTemp.getHeaderPage());
 
-            if (type == 4 || type == 5) {
-                //file3 = new BTreeFile("AAAa", 1, 100, 0);
-                // file3 = new BTreeFile("AAAa");
-                // BT.printBTree(btf2.getHeaderPage());
-                // BT.printAllLeafPages(btf2.getHeaderPage());
-            }
+            // if (type == 4 || type == 5) {
+            //     //file3 = new BTreeFile("AAAa", 1, 100, 0);
+            //     // file3 = new BTreeFile("AAAa");
+            //     // BT.printBTree(btf2.getHeaderPage());
+            //     // BT.printAllLeafPages(btf2.getHeaderPage());
+            // }
 
             bin.close();
 
