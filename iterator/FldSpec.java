@@ -1,4 +1,5 @@
 package iterator;
+import BigT.*;
 
 public class FldSpec {
   public  RelSpec relation;

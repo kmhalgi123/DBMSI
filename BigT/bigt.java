@@ -400,7 +400,7 @@ public class bigt implements Filetype, GlobalConst {
 
         amap = currentDirPage.returnRecord(currentDataPageRid);
         // System.out.println("After Flush: "+Arrays.toString(amap.data));
-        // byte[] newb = new byte[12];
+        // byte[] newbpublic void deleteFile()  
         // ConvertMap.setIntValue(dpinfo.availspace, 0, newb);
         // ConvertMap.setIntValue(dpinfo.recct, 4, newb);
         // ConvertMap.setIntValue(dpinfo.pageId.pid, 8, newb);
@@ -951,11 +951,16 @@ public class bigt implements Filetype, GlobalConst {
         return true;
     }
 
-    public Stream openStream(int order, String rowFilter, String columnFilter, String valueFilter) throws InvalidTupleSizeException, IOException,
-            HFBufMgrException {
-        Stream newsStream = new Stream(this, order, rowFilter, columnFilter, valueFilter);
+    public Stream openStream() throws InvalidTupleSizeException, IOException {
+        Stream newsStream = new Stream(this);
         return newsStream;
     }
+
+    // public Stream openStream(int order, String rowFilter, String columnFilter, String valueFilter) throws InvalidTupleSizeException, IOException,
+    //         HFBufMgrException {
+    //     Stream newsStream = new Stream(this, order, rowFilter, columnFilter, valueFilter);
+    //     return newsStream;
+    // }
 
     private void pinPage(PageId pageno, Page page, boolean emptyPage)throws HFBufMgrException {
         

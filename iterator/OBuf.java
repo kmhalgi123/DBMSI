@@ -1,6 +1,8 @@
 package iterator;
 import BigT.*;
 import global.*;
+import bufmgr.*;
+import diskmgr.*;
 
 import java.io.*;
 
@@ -28,9 +30,10 @@ public class OBuf implements GlobalConst{
    *@param buffer  true => it is used as a buffer => if it is flushed, print
    *                      a nasty message. it is false by default.
   */
-  public void init(byte[][] bufs, int n_pages, int tSize, bigt temp_fd, boolean buffer ) {
+  public void init(byte[][] bufs, int n_pages, int tSize, bigt temp_fd, boolean buffer )
+  {
     _bufs    = bufs;
-    // _n_pages = n_pages;
+    _n_pages = n_pages;
     t_size   = tSize;
     _temp_fd = temp_fd;
     
@@ -51,14 +54,12 @@ public class OBuf implements GlobalConst{
    *@exception IOException  some I/O fault
    *@exception Exception other exceptions
    */
-  public Map  Put(Map buf) throws IOException, Exception
-  {
+  public Map  Put(Map buf) throws IOException, Exception {
       
     byte[] copybuf;
     copybuf = buf.getMapByteArray();
-    t_size = copybuf.length;
-    System.arraycopy(copybuf,0,_bufs[curr_page],t_wr_to_pg*t_size,copybuf.length); 
-    Map map_ptr = new Map(_bufs[curr_page] , t_wr_to_pg * t_size);
+    System.arraycopy(copybuf,0,_bufs[curr_page],t_wr_to_pg*t_size,t_size); 
+    Map tuple_ptr = new Map(_bufs[curr_page] , t_wr_to_pg * t_size);
     
     t_written++; t_wr_to_pg++; t_wr_to_buf++; dirty = true;
     
@@ -68,14 +69,13 @@ public class OBuf implements GlobalConst{
       
       t_wr_to_pg = 0; t_wr_to_buf = 0;        // Initialize page info
       curr_page  = 0;
-    }
-    else if (t_wr_to_pg == t_per_pg)
+    } else if (t_wr_to_pg == t_per_pg)
     {
       t_wr_to_pg = 0;
       curr_page++;
     }
       
-    return map_ptr;
+    return tuple_ptr;
   }
   
   /**
@@ -84,20 +84,22 @@ public class OBuf implements GlobalConst{
    *@exception IOException some I/O fault
    *@exception Exception other exceptions
    */
-  public long flush() throws IOException, Exception {
+  public   long flush()  throws IOException, Exception {
     int count;
-    // int bytes_written = 0;
+    int bytes_written = 0;
     byte[] tempbuf = new byte[t_size]; 
     if (buffer_only == true)
-    System.out.println("Stupid error - but no error protocol");
+      System.out.println("Stupid error - but no error protocol");
     
     if (dirty) {
-	    for (count = 0; count <= curr_page; count++) {
+	    for (count = 0; count <= curr_page; count++)
+	    {
 	      MID rid;
 	      // Will have to go thru entire buffer writing tuples to disk
 	      
 	      if (count == curr_page)
-		      for (int i = 0; i < t_wr_to_pg; i++) {
+		      for (int i = 0; i < t_wr_to_pg; i++)
+          {
             System.arraycopy(_bufs[count],t_size*i,tempbuf,0,t_size);
             try {
               rid =  _temp_fd.insertMap(tempbuf);
@@ -106,7 +108,7 @@ public class OBuf implements GlobalConst{
               throw e;
             }
           }
-	      else
+        else
           for (int i = 0; i < t_per_pg; i++)
           {       
             System.arraycopy(_bufs[count],t_size*i,tempbuf,0,t_size);
@@ -117,7 +119,7 @@ public class OBuf implements GlobalConst{
               throw e;
             }
           }
-	      }
+	    }
 	  
 	    dirty = false;
 	  }
@@ -132,10 +134,10 @@ public class OBuf implements GlobalConst{
     t_wr_to_buf;                        // # of tuples written to buffer.
   private  int  curr_page;                        // Current page being written to.
   private  byte[][]_bufs;                        // Array of pointers to buffer pages.
-  // private  int  _n_pages;                        // number of pages in array
+  private  int  _n_pages;                        // number of pages in array
   private  int  t_size;                                // Size of a tuple
   private  long t_written;                        // # of tuples written so far.
-  // private  int  TEST_temp_fd;                        // fd of a temporary file
+  private  int  TEST_temp_fd;                        // fd of a temporary file
   private  bigt _temp_fd;
   private  boolean buffer_only;
 }

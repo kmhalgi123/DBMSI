@@ -1,5 +1,8 @@
 package iterator; 
 
+import global.*;
+import bufmgr.*;
+import diskmgr.*;
 import BigT.*;
 
 /**
@@ -28,10 +31,10 @@ public class pnode {
    * @param runNum the run number
    * @param t      the tuple
    */
-  public pnode(int runNum, Map t) 
+  public pnode(int runNum, Map m) 
   {
     run_num = runNum;
-    map = t;
+    map = m;
   }
   
 }

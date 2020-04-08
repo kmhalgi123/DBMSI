@@ -1,9 +1,10 @@
 
 package iterator;
 import global.*;
-import java.io.*;
-
+import bufmgr.*;
+import diskmgr.*;
 import BigT.*;
+import java.io.*;
 
 /**
  * Implements a sorted binary tree.
@@ -50,8 +51,7 @@ public abstract class pnodePQ
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
    */
-  abstract public void  enq(pnode  item) 
-           throws IOException,  MapUtilsException;      
+  abstract public void  enq(pnode  item) throws IOException, UnknowAttrType, MapUtilsException;      
 
   /**
    * removes the minimum (Ascending) or maximum (Descending) element
@@ -73,12 +73,8 @@ public abstract class pnodePQ
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
    */
-  public int pnodeCMP(pnode a, pnode b) throws IOException, MapUtilsException {
-    Map map = b.map;
-    map.mapSetup();
-    Map am = a.map;
-    am.mapSetup();
-    int ans = MapUtils.CompareMapWithMap(am, map, fld_no);
+  public int pnodeCMP(pnode a, pnode b) throws IOException, UnknowAttrType, MapUtilsException {
+    int ans = MapUtils.CompareMapWithMap(a.map, b.map, fld_no);
     return ans;
   }
 
@@ -93,7 +89,7 @@ public abstract class pnodePQ
    *                           <code>attrNull</code> encountered
    * @exception TupleUtilsException error in tuple compare routines
    */  
-  public boolean pnodeEQ(pnode a, pnode b) throws IOException, MapUtilsException {
+  public boolean pnodeEQ(pnode a, pnode b) throws IOException, UnknowAttrType, MapUtilsException {
     return pnodeCMP(a, b) == 0;
   }
   

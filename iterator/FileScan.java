@@ -8,7 +8,6 @@ import diskmgr.*;
 
 
 import java.lang.*;
-
 import java.io.*;
 
 /**
@@ -46,32 +45,36 @@ public class FileScan extends  Iterator
    *@exception InvalidRelation invalid relation 
    */
   public  FileScan (String  file_name,
-		    AttrType in1[],                
-		    short s1_sizes[], 
-		    short     len_in1,              
-		    int n_out_flds,
-		    FldSpec[] proj_list,
-		    CondExpr[]  outFilter
-		    )
+    int type,
+    short s1_sizes[],
+    int n_out_flds,
+    FldSpec[] proj_list,
+    CondExpr[]  outFilter 
+		)
     throws IOException,
 	   FileScanException,
 	   MapUtilsException, 
 	   InvalidRelation
-    {
-      _in1 = in1; 
-      in1_len = len_in1;
-      s_sizes = s1_sizes;
-      
-      Jtuple =  new Map();
-      AttrType[] Jtypes = new AttrType[n_out_flds];
-      short[]    ts_size;
-      ts_size = MapUtils.setup_op_tuple(Jtuple, Jtypes, in1, len_in1, s1_sizes, proj_list, n_out_flds);
-      
-      OutputFilter = outFilter;
-      perm_mat = proj_list;
-      nOutFlds = n_out_flds; 
-      tuple1 =  new Map();
+  {
+    AttrType in1[] = {new AttrType(AttrType.attrString),
+      new AttrType(AttrType.attrString),
+      new AttrType(AttrType.attrInteger),
+      new AttrType(AttrType.attrString)};
+    _in1 = in1; 
+    in1_len = 4;
+    s_sizes = s1_sizes;
+    
+    Jtuple =  new Map();
+    AttrType[] Jtypes = new AttrType[n_out_flds];
+    short[]    ts_size;
+    ts_size = MapUtils.setup_op_tuple(Jtuple, Jtypes, s1_sizes, proj_list, n_out_flds);
+    
+    OutputFilter = outFilter;
+    perm_mat = proj_list;
+    nOutFlds = n_out_flds; 
+    tuple1 =  new Map();
 
+<<<<<<< HEAD
       try {
 	tuple1.setHdr(s1_sizes);
       }catch (Exception e){
@@ -93,7 +96,30 @@ public class FileScan extends  Iterator
       catch(Exception e){
 	throw new FileScanException(e, "openScan() failed");
       }
+=======
+    try {
+      tuple1.setHdr(s1_sizes);
+    }catch (Exception e){
+      throw new FileScanException(e, "setHdr() failed");
     }
+    t1_size = tuple1.size();
+    
+    try {
+      f = new bigt(file_name, 0);
+
+    }
+    catch(Exception e) {
+      throw new FileScanException(e, "Create new heapfile failed");
+>>>>>>> origin/kaushal_work
+    }
+    
+    try {
+      scan = f.openStream();
+    }
+    catch(Exception e){
+      throw new FileScanException(e, "openScan() failed");
+    }
+  }
   
   /**
    *@return shows what input fields go where in the output tuple
@@ -104,41 +130,35 @@ public class FileScan extends  Iterator
     }
   
   /**
-   *@return the result tuple
-   *@exception JoinsException some join exception
-   *@exception IOException I/O errors
-   *@exception InvalidTupleSizeException invalid tuple size
-   *@exception InvalidTypeException tuple type not valid
-   *@exception PageNotReadException exception from lower layer
-   *@exception PredEvalException exception from PredEval class
-   *@exception UnknowAttrType attribute type unknown
-   *@exception FieldNumberOutOfBoundException array out of bounds
-   *@exception WrongPermat exception for wrong FldSpec argument
+   * @return the result tuple
+   * @exception JoinsException                 some join exception
+   * @exception IOException                    I/O errors
+   * @exception InvalidTupleSizeException      invalid tuple size
+   * @exception InvalidTypeException           tuple type not valid
+   * @exception PageNotReadException           exception from lower layer
+   * @exception PredEvalException              exception from PredEval class
+   * @exception UnknowAttrType                 attribute type unknown
+   * @exception FieldNumberOutOfBoundException array out of bounds
+   * @exception WrongPermat                    exception for wrong FldSpec
+   *                                           argument
+   * @throws MapUtilsException
    */
   public Map get_next()
-    throws JoinsException,
-	   IOException,
-	   InvalidTupleSizeException,
-	   InvalidTypeException,
-	   PageNotReadException, 
-	   PredEvalException,
-	   UnknowAttrType,
-	   FieldNumberOutOfBoundException,
-	   WrongPermat
+      throws JoinsException, IOException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException,
+      PredEvalException, UnknowAttrType, FieldNumberOutOfBoundException, WrongPermat, MapUtilsException
     {     
       MID rid = new MID();;
       
       while(true) {
-	if((tuple1 =  scan.getNext(rid)) == null) {
-	  return null;
-	}
+	      if((tuple1 =  scan.getNext(rid)) == null) {
+	        return null;
+	      }
 	
-  // tuple1.setHdr(s_sizes);
-  tuple1.mapSetup();
-	if (PredEval.Eval(OutputFilter, tuple1, null) == true){
-	  Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds); 
-	  return  Jtuple;
-	}        
+        tuple1.mapSetup();
+        if (PredEval.Eval(OutputFilter, tuple1, null) == true){
+          Projection.Project(tuple1,  Jtuple, perm_mat, nOutFlds); 
+          return  Jtuple;
+        }        
       }
     }
 
@@ -147,13 +167,13 @@ public class FileScan extends  Iterator
    *to finish cleaning up
    */
   public void close() 
-    {
-     
-      if (!closeFlag) {
-	scan.closescan();
-	closeFlag = true;
-      } 
-    }
+  {
+    
+    if (!closeFlag) {
+      scan.closescan();
+      closeFlag = true;
+    } 
+  }
   
 }
 
