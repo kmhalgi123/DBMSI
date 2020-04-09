@@ -299,6 +299,34 @@ public class BatchInsert {
                     query(filename, type, order, newSel);
                 } else if (words[0].equals("exit")) {
                     quit = true;
+                } else if (words[0].equals("mapinsert")) {
+                    String dbname = words[5];
+                    String rl = words[1];
+                    String cl = words[2];
+                    String val = words[3];
+                    int ts = Integer.parseInt(words[4]);
+                    int numbf = Integer.parseInt(words[6]);
+                    f = new bigt(dbname);
+                    byte[] mapData = new byte[116];
+
+                    int position = 10;
+                    ConvertMap.setStrValue(rl, position, mapData);
+                    position += 34; //rowLabel.getBytes().length + 2;
+
+                    ConvertMap.setStrValue(cl, position, mapData);
+                    position += 34; //columnLabel.getBytes().length + 2;
+
+                    ConvertMap.setIntValue(ts, position, mapData);
+                    position += 4;
+
+                    ConvertMap.setStrValue(val, position, mapData);
+                    position += 34; //value.getBytes().length + 2;
+
+                    Map map = new Map(mapData, 0);
+
+                    map.setHdr(new short[] { 32,32,32}); 
+
+                    MID k = f.mapInsert(map.getMapByteArray());
                 } else {
                     System.out.println("Invalid input!");
                 }
@@ -313,143 +341,148 @@ public class BatchInsert {
     public static boolean batchInsert(String dbFileName, int type, String filepath) throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
     InvalidSelectionException, IOException, UnknownKeyTypeException, GetFileEntryException,
     ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
-    InvalidFrameNumberException, PageUnpinnedException, ReplacerException{
-        try {
-            FileInputStream fin;
-            short[] FldOffset = new short[5];
-            fin = new FileInputStream(filepath);
-            DataInputStream din = new DataInputStream(fin);
-            BufferedReader bin = new BufferedReader(new InputStreamReader(din));
+    InvalidFrameNumberException, PageUnpinnedException, ReplacerException, HFDiskMgrException,
+    HFBufMgrException, HFException {
+        f = new bigt(dbFileName+"_"+String.valueOf(type));
+        f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
+        return true;
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata3.csv 1 bd
+        // try {
+        //     FileInputStream fin;
+        //     short[] FldOffset = new short[5];
+        //     fin = new FileInputStream(filepath);
+        //     DataInputStream din = new DataInputStream(fin);
+        //     BufferedReader bin = new BufferedReader(new InputStreamReader(din));
             
-            BTreeFile btf = null;
-            BTreeFile btf2 = null;
-            BTreeFile file2, file3;
+        //     BTreeFile btf = null;
+        //     BTreeFile btf2 = null;
+        //     BTreeFile file2, file3;
 
-            f = new bigt(dbFileName+"_"+String.valueOf(type));
+        //     f = new bigt(dbFileName+"_"+String.valueOf(type));
 
-            btf = new BTreeFile("Adithya", 0, 100, 0);
-            btf2 = new BTreeFile("AAAa", 1, 100, 0);
+        //     btf = new BTreeFile("Adithya", 0, 100, 0);
+        //     btf2 = new BTreeFile("AAAa", 1, 100, 0);
 
-            // String line = bin.readLine();
-            String line;
-            int maplength = 0;
-            int count = 0;
-            StringTokenizer st;
-            System.out.println("Batch Inserting records! Wait for few minutes!");
-            while ((line = bin.readLine()) != null) {
-                // System.out.println(line);
-                st = new StringTokenizer(line);
+        //     // String line = bin.readLine();
+        //     String line;
+        //     int maplength = 0;
+        //     int count = 0;
+        //     StringTokenizer st;
+        //     System.out.println("Batch Inserting records! Wait for few minutes!");
+        //     while ((line = bin.readLine()) != null) {
+        //         // System.out.println(line);
+        //         st = new StringTokenizer(line);
 
-                while (st.hasMoreTokens()) {
-                    String token = st.nextToken();
+        //         while (st.hasMoreTokens()) {
+        //             String token = st.nextToken();
 
-                    StringTokenizer sv = new StringTokenizer(token);
-                    String rowLabel = sv.nextToken(",");
-                    maplength += 34; //(rowLabel.getBytes().length + 2);
+        //             StringTokenizer sv = new StringTokenizer(token);
+        //             String rowLabel = sv.nextToken(",");
+        //             maplength += 34; //(rowLabel.getBytes().length + 2);
 
-                    String columnLabel = sv.nextToken(",");
-                    maplength += 34; //(columnLabel.getBytes().length + 2);
+        //             String columnLabel = sv.nextToken(",");
+        //             maplength += 34; //(columnLabel.getBytes().length + 2);
 
-                    int timeStamp = Integer.parseInt(sv.nextToken(","));
-                    maplength += 4;
+        //             int timeStamp = Integer.parseInt(sv.nextToken(","));
+        //             maplength += 4;
 
-                    String value = sv.nextToken(",");
-                    maplength += 34; //(value.getBytes().length + 2);
+        //             String value = sv.nextToken(",");
+        //             maplength += 34; //(value.getBytes().length + 2);
 
-                    byte[] mapData = new byte[maplength + 10];
+                    // byte[] mapData = new byte[maplength + 10];
 
-                    int position = 10;
-                    ConvertMap.setStrValue(rowLabel, position, mapData);
-                    position += 34; //rowLabel.getBytes().length + 2;
+                    // int position = 10;
+                    // ConvertMap.setStrValue(rowLabel, position, mapData);
+                    // position += 34; //rowLabel.getBytes().length + 2;
 
-                    ConvertMap.setStrValue(columnLabel, position, mapData);
-                    position += 34; //columnLabel.getBytes().length + 2;
+                    // ConvertMap.setStrValue(columnLabel, position, mapData);
+                    // position += 34; //columnLabel.getBytes().length + 2;
 
-                    ConvertMap.setIntValue(timeStamp, position, mapData);
-                    position += 4;
+                    // ConvertMap.setIntValue(timeStamp, position, mapData);
+                    // position += 4;
 
-                    ConvertMap.setStrValue(value, position, mapData);
-                    position += 34; //value.getBytes().length + 2;
+                    // ConvertMap.setStrValue(value, position, mapData);
+                    // position += 34; //value.getBytes().length + 2;
 
-                    Map map = new Map(mapData, 0);
+                    // Map map = new Map(mapData, 0);
 
-                    map.setHdr(new short[] { 32,32,32}); //(short) rowLabel.getBytes().length, (short) columnLabel.getBytes().length,
-                            //(short) value.getBytes().length });
+                    // map.setHdr(new short[] { 32,32,32}); //(short) rowLabel.getBytes().length, (short) columnLabel.getBytes().length,
+                    //         //(short) value.getBytes().length });
 
-                    MID k = f.insertMap(map.getMapByteArray());
+                    // MID k = f.insertMap(map.getMapByteArray());
 
 
-                    // System.out.println("Record No: " + count + ", MID: slt: " + k.slotNo + ",
-                    // page:" + k.pageNo.pid);
+        //             // System.out.println("Record No: " + count + ", MID: slt: " + k.slotNo + ",
+        //             // page:" + k.pageNo.pid);
                     
-                    // if (type == 1) {
-                    //     System.out.println("No type");
-                    // }
-                    if (type == 2) {
-                        // System.out.println("starting point");
-                        String key = map.getRowLabel();
-                        // System.out.println(key);
-                        btf.insert(new StringKey(key), k);
+        //             // if (type == 1) {
+        //             //     System.out.println("No type");
+        //             // }
+        //             if (type == 2) {
+        //                 // System.out.println("starting point");
+        //                 String key = map.getRowLabel();
+        //                 // System.out.println(key);
+        //                 btf.insert(new StringKey(key), k);
 
-                    }
-                    if (type == 3) {
-                        String key = map.getColumnLabel();
-                        btf.insert(new StringKey(key), k);
-                    }
-                    if (type == 4) {
+        //             }
+        //             if (type == 3) {
+        //                 String key = map.getColumnLabel();
+        //                 btf.insert(new StringKey(key), k);
+        //             }
+        //             if (type == 4) {
 
-                        String key1 = map.getRowLabel();
-                        String key2 = map.getColumnLabel();
-                        String key = key2 + key1;
-                        int keyt = map.getTimeStamp();
-                        // System.out.println(keyt);
-                        btf.insert(new StringKey(key), k);
-                        btf2.insert(new IntegerKey(keyt), k);
-                    }
-                    if (type == 5) {
-                        String key1 = map.getRowLabel();
-                        String key2 = map.getValue();
-                        String key = key1 + key2;
-                        int keyt = map.getTimeStamp();
-                        btf.insert(new StringKey(key), k);
-                        btf2.insert(new IntegerKey(keyt), k);
-                    }
-
-
-                }
-                count++;
-                System.out.println(count);
-            }
-            System.out.println("Hello "+ f.getMapCnt());
-
-            file2 = new BTreeFile("Adithya");
-            BT.printBTree(btf.getHeaderPage());
-            BT.printAllLeafPages(btf.getHeaderPage());
-            // BT.printBTree(btf.new_scan(lo_key, hi_key));
-
-            if (type == 4 || type == 5) {
-                //file3 = new BTreeFile("AAAa", 1, 100, 0);
-                file3 = new BTreeFile("AAAa");
-                BT.printBTree(btf2.getHeaderPage());
-                BT.printAllLeafPages(btf2.getHeaderPage());
-            }
+        //                 String key1 = map.getRowLabel();
+        //                 String key2 = map.getColumnLabel();
+        //                 String key = key2 + key1;
+        //                 int keyt = map.getTimeStamp();
+        //                 // System.out.println(keyt);
+        //                 btf.insert(new StringKey(key), k);
+        //                 btf2.insert(new IntegerKey(keyt), k);
+        //             }
+        //             if (type == 5) {
+        //                 String key1 = map.getRowLabel();
+        //                 String key2 = map.getValue();
+        //                 String key = key1 + key2;
+        //                 int keyt = map.getTimeStamp();
+        //                 btf.insert(new StringKey(key), k);
+        //                 btf2.insert(new IntegerKey(keyt), k);
+        //             }
 
 
-            System.out.println("Read counts: "+PCounter.rcounter);
-            System.out.println("Write counts: "+PCounter.wcounter);
-            bin.close();
-            System.out.println("Batchinsert finished!");
+        //         }
+        //         count++;
+        //         System.out.println(count);
+        //     }
+        //     System.out.println("Hello "+ f.getMapCnt());
 
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
-        }
+        //     file2 = new BTreeFile("Adithya");
+        //     BT.printBTree(btf.getHeaderPage());
+        //     BT.printAllLeafPages(btf.getHeaderPage());
+        //     // BT.printBTree(btf.new_scan(lo_key, hi_key));
+
+        //     if (type == 4 || type == 5) {
+        //         //file3 = new BTreeFile("AAAa", 1, 100, 0);
+        //         file3 = new BTreeFile("AAAa");
+        //         BT.printBTree(btf2.getHeaderPage());
+        //         BT.printAllLeafPages(btf2.getHeaderPage());
+        //     }
+
+
+        //     System.out.println("Read counts: "+PCounter.rcounter);
+        //     System.out.println("Write counts: "+PCounter.wcounter);
+        //     bin.close();
+        //     System.out.println("Batchinsert finished!");
+
+        // } catch (Exception e) {
+        //     // TODO: handle exception
+        //     e.printStackTrace();
+        // }
 
         
 
         //Map m = indexScan.get_next();
 
-        return true;
+        // return true;
     }
 
     public static boolean query(String filename, int type, int order, CondExpr[] select)
