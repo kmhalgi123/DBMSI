@@ -26,6 +26,7 @@ public class BatchInsert {
         PCounter.initialize();
         Scanner sc = new Scanner(System.in);
 
+        SystemDefs sysdef = new SystemDefs(fpath + "bigdata", 8000, 500, "Clock");
         boolean quit = false;
         ArrayList<CondExpr> select = new ArrayList<>();
         
@@ -38,9 +39,8 @@ public class BatchInsert {
                     String filepath = words[1];
                     int type = Integer.parseInt(words[2]);
                     String dbname = words[3];
-                    SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, 500, "Clock");
                     try {
-                        f = new bigt(dbname + "_" + String.valueOf(type));
+                        f = new bigt(dbname);
                     } catch (Exception e) {
                         // status = FAIL;
                         System.err.println("*** Could not create heap file\n");
@@ -51,7 +51,7 @@ public class BatchInsert {
                     String dbname = words[1];
                     int type = Integer.parseInt(words[2]);
                     int order = Integer.parseInt(words[3]);
-                    String filename = dbname+"_"+String.valueOf(type);
+                    String filename = dbname;
                     String rowFilter, colFilter, valFilter;
                     int bufpage;
                     if (words[4].charAt(0) == '[') {
@@ -289,7 +289,7 @@ public class BatchInsert {
                         }
                     }
                     // SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, bufpage, "Clock");
-                    f = new bigt(dbname + String.valueOf(type));
+                    f = new bigt(dbname);
                     CondExpr[] newSel = new CondExpr[select.size()+1];
                     for(int i = 0;i< select.size();i++){
                         newSel[i] = select.get(i);
@@ -300,12 +300,13 @@ public class BatchInsert {
                 } else if (words[0].equals("exit")) {
                     quit = true;
                 } else if (words[0].equals("mapinsert")) {
-                    String dbname = words[5];
+                    int type = Integer.parseInt(words[5]); 
+                    String dbname = words[6];
                     String rl = words[1];
                     String cl = words[2];
                     String val = words[3];
                     int ts = Integer.parseInt(words[4]);
-                    int numbf = Integer.parseInt(words[6]);
+                    int numbf = Integer.parseInt(words[7]);
                     f = new bigt(dbname);
                     byte[] mapData = new byte[116];
 
@@ -327,6 +328,7 @@ public class BatchInsert {
                     map.setHdr(new short[] { 32,32,32}); 
 
                     MID k = f.mapInsert(map.getMapByteArray());
+                    System.out.println(f.getMapCnt());
                 } else {
                     System.out.println("Invalid input!");
                 }
@@ -343,10 +345,10 @@ public class BatchInsert {
     ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
     InvalidFrameNumberException, PageUnpinnedException, ReplacerException, HFDiskMgrException,
     HFBufMgrException, HFException {
-        f = new bigt(dbFileName+"_"+String.valueOf(type));
-        f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
+        f = new bigt(dbFileName);
+        f.batchInsert(filepath, type, dbFileName);
         return true;
-        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata3.csv 1 bd
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata4.csv 1 bd
         // try {
         //     FileInputStream fin;
         //     short[] FldOffset = new short[5];
