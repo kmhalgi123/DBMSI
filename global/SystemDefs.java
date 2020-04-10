@@ -70,7 +70,7 @@ public class SystemDefs {
         System.err.println (""+e);
         e.printStackTrace();
         Runtime.getRuntime().exit(1);
-      }
+      } 
     } else {
       try {
         JavabaseDB.openDB(dbname, num_pgs);

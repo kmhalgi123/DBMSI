@@ -1022,6 +1022,7 @@ public class bigt implements Filetype, GlobalConst {
         PageId tmpId = new PageId();
 
         try {
+        
         tmpId = SystemDefs.JavabaseDB.get_file_entry(filename);
         }
         catch (Exception e) {

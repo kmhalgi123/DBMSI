@@ -83,7 +83,6 @@ public class FileScan extends  Iterator
     
     try {
       f = new bigt(file_name);
-
     }
     catch(Exception e) {
       throw new FileScanException(e, "Create new heapfile failed");

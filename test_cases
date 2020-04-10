@@ -1,0 +1,98 @@
+batchinsert project2_testdata.csv 2 bigtable2
+batchinsert file.csv 2 bigtable2
+batchinsert project3_testdata.csv 2 bigtable2
+
+
+batchinsert file1.csv 2 bigtable2
+batchinsert file2.csv 2 bigtable2
+
+type 1:
+1. rs cs vs
+query bigt 2 0 Singapore Camel 2 100
+2. rs cs v*
+query bigt 2 0 Singapore Camel * 100
+
+3. rs cs vr
+query bigtable2 2 0 Singapore Camel [1, 50] 100
+4. rs c* vs
+query bigtable2 2 0 Singapore * 9300 100
+5. rs c* v*
+query bigtable2 2 0 Singapore * * 100
+6. rs c* vr
+query bigtable2 2 0 Singapore * [1, 50] 100
+7. rs cr vs
+query bigtable2 2 0 Singapore [Camel, Mouse] 2 100
+8. rs cr v*
+query bigtable2 2 0 Singapore [Camel, Donkey] * 100
+9. rs cr vr
+query bigtable2 2 0 Singapore [Camel, Mouse] [1, 50] 100
+query bigtable2 2 0 Singapore [Baaa, Mouse] [1, 50] 100
+
+10. r* cs vs
+query bigtable2 2 0 * Camel 2 100
+11. r* cs v*
+query bigtable2 2 0 * Camel * 100
+12. r* cs vr
+query bigtable2 2 0 * Camel [1, 50] 100
+13. r* c* vs
+query bigtable2 2 0 * * 2 100
+14. r* c* v*
+query bigtable2 2 0 * * * 100
+15. r* c* vr
+query bigtable2 2 0 * * [1, 50] 100
+16. r* cr vs
+query bigtable2 2 0 * [Camel, Mouse] 2 100
+17. r* cr v*
+query bigtable2 2 0 * [Camel, Mouse] * 100
+18. r* cr vr
+query bigtable2 2 0 * [Camel, Mouse] [1, 50] 100
+19. rr cs vs
+query bigtable2 2 0 [California, Greece] Camel 2 100
+20. rr cs v*
+query bigtable2 2 0 [California, Greece] Camel * 100
+21. rr cs vr
+query bigtable2 2 0 [California, Greece] Camel [1, 50] 100
+query bigtable2 2 0 [Baaa, Greece] Camel [1, 50] 100
+22. rr c* vs
+query bigtable2 2 0 [California, Greece] * 2 100
+23. rr c* v*
+query bigtable2 2 0 [California, Greece] * * 100
+24. rr c* vr
+query bigtable2 2 0 [California, Greece] * [2, 50] 100
+25. rr cr vs
+query bigtable2 2 0 [California, Greece] [Camel, Mouse] 2 100
+26. rr cr v*
+query bigtable2 2 0 [California, Greece] [Camel, Mouse] * 100
+27. rr cr vr
+query bigtable2 2 0 [California, Greece] [Camel, Mouse] [1, 50] 100
+
+1 = rs cs vs
+2 = r* c* v*
+3 = rr cr vr
+1. 1 1 1
+2. 1 1 2
+3. 1 1 3
+4. 1 2 1
+5. 1 2 2
+6. 1 2 3
+7. 1 3 1
+8. 1 3 2
+9. 1 3 3
+10. 2 1 1
+11. 2 1 2
+12. 2 1 3
+13. 2 2 1
+14. 2 2 2
+15. 2 2 3
+16. 2 3 1
+17. 2 3 2
+18. 2 3 3
+19. 3 1 1
+20. 3 1 2
+21. 3 1 3
+22. 3 2 1
+23. 3 2 2
+24. 3 2 3
+25. 3 3 1
+26. 3 3 2
+27. 3 3 3

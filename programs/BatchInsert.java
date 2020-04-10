@@ -16,104 +16,119 @@ import iterator.*;
 import index.*;
 
 public class BatchInsert {
-    static String fpath = "/tmp/";
+    static String fpath = "";
     static bigt f = null;
-    String dbFileName = "project2_testdata.csv";
-    
+    static String bigTFileName = "";
+
+    // String dbFileName = "project2_testdata.csv";
 
     public static void main(String[] args) {
 
         PCounter.initialize();
         Scanner sc = new Scanner(System.in);
+        SystemDefs sysdef = new SystemDefs(fpath + "database", 500, 500, "Clock");
 
         boolean quit = false;
         ArrayList<CondExpr> select = new ArrayList<>();
-        
+
         try {
             do {
                 System.out.print(">> ");
+
                 String que = sc.nextLine();
                 String[] words = que.split("\\s+");
                 if (words[0].equals("batchinsert")) {
                     String filepath = words[1];
                     int type = Integer.parseInt(words[2]);
                     String dbname = words[3];
-                    SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, 500, "Clock");
-                    try {
-                        f = new bigt(dbname + "_" + String.valueOf(type));
-                    } catch (Exception e) {
-                        // status = FAIL;
-                        System.err.println("*** Could not create heap file\n");
-                        e.printStackTrace();
+                    if (f == null) {
+                        bigTFileName = dbname + "_" + String.valueOf(type);
+
+                        try {
+                            f = new bigt(bigTFileName);
+                            batchInsert(bigTFileName, type, filepath);
+
+                        } catch (Exception e) {
+                            System.err.println("Could not create heap file \n");
+                            e.printStackTrace();
+                        }
+
                     }
-                    batchInsert(dbname, type, filepath);
+                    else {
+                        f = new bigt(bigTFileName);
+                        System.out.println("Here");
+                        System.out.println(f.getMapCnt());
+                        batchInsert(bigTFileName, type, filepath);
+
+                    }
+
                 } else if (words[0].equals("query")) {
                     String dbname = words[1];
                     int type = Integer.parseInt(words[2]);
                     int order = Integer.parseInt(words[3]);
-                    String filename = dbname+"_"+String.valueOf(type);
+                    String filename = dbname + "_" + String.valueOf(type);
                     String rowFilter, colFilter, valFilter;
                     int bufpage;
                     if (words[4].charAt(0) == '[') {
                         // rowFilter = words[4] + words[5];
-                        CondExpr c= new CondExpr();
+                        CondExpr c = new CondExpr();
                         c.fldNo = 1;
                         c.type1 = new AttrType(AttrType.attrSymbol);
                         c.op = new AttrOperator(AttrOperator.aopGT);
                         c.type2 = new AttrType(AttrType.attrString);
                         c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                        c.operand2.string = words[4].substring(1, words[4].length()-1);
+                        c.operand2.string = words[4].substring(1, words[4].length() - 1);
                         select.add(c);
-                        c= new CondExpr();
+                        c = new CondExpr();
                         c.fldNo = 1;
                         c.type1 = new AttrType(AttrType.attrSymbol);
                         c.op = new AttrOperator(AttrOperator.aopLT);
                         c.type2 = new AttrType(AttrType.attrString);
                         c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                        c.operand2.string = words[5].substring(0, words[5].length()-1);
+                        c.operand2.string = words[5].substring(0, words[5].length() - 1);
                         select.add(c);
                         if (words[6].charAt(0) == '[') {
 
                             // colFilter = words[6] + words[7];
-                            c= new CondExpr();
+                            c = new CondExpr();
                             c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopGT);
                             c.type2 = new AttrType(AttrType.attrString);
                             c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                            c.operand2.string = words[6].substring(1, words[6].length()-1);
+                            c.operand2.string = words[6].substring(1, words[6].length() - 1);
                             select.add(c);
-                            c= new CondExpr();
+                            c = new CondExpr();
                             c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopLT);
                             c.type2 = new AttrType(AttrType.attrString);
                             c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                            c.operand2.string = words[7].substring(0, words[7].length()-1);
+                            c.operand2.string = words[7].substring(0, words[7].length() - 1);
                             select.add(c);
                             if (words[8].charAt(0) == '[') {
                                 // valFilter = words[8] + words[9];
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[8].substring(1, words[8].length()-1);
+                                c.operand2.string = words[8].substring(1, words[8].length() - 1);
                                 select.add(c);
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[9].substring(0, words[9].length()-1);
+                                c.operand2.string = words[9].substring(0, words[9].length() - 1);
                                 select.add(c);
                                 bufpage = Integer.parseInt(words[10]);
                             } else {
                                 valFilter = words[8];
-                                if(!valFilter.equals("*")){
-                                    c= new CondExpr();
+                                if (!valFilter.equals("*")) {
+                                    c = new CondExpr();
                                     c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -126,8 +141,8 @@ public class BatchInsert {
                             }
                         } else {
                             colFilter = words[6];
-                            if(!colFilter.equals("*")){
-                                c= new CondExpr();
+                            if (!colFilter.equals("*")) {
+                                c = new CondExpr();
                                 c.fldNo = 2;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -138,27 +153,27 @@ public class BatchInsert {
                             }
                             if (words[7].charAt(0) == '[') {
                                 // valFilter = words[7] + words[8];
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[7].substring(1, words[7].length()-1);
+                                c.operand2.string = words[7].substring(1, words[7].length() - 1);
                                 select.add(c);
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[8].substring(0, words[8].length()-1);
+                                c.operand2.string = words[8].substring(0, words[8].length() - 1);
                                 select.add(c);
                                 bufpage = Integer.parseInt(words[9]);
                             } else {
                                 valFilter = words[7];
-                                if(!valFilter.equals("*")){
-                                    c= new CondExpr();
+                                if (!valFilter.equals("*")) {
+                                    c = new CondExpr();
                                     c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -172,9 +187,9 @@ public class BatchInsert {
                         }
                     } else {
                         rowFilter = words[4];
-                        if(!rowFilter.equals("*")){
+                        if (!rowFilter.equals("*")) {
                             CondExpr c;
-                            c= new CondExpr();
+                            c = new CondExpr();
                             c.fldNo = 1;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -186,48 +201,48 @@ public class BatchInsert {
                         if (words[5].charAt(0) == '[') {
                             // colFilter = words[5] + words[6];
                             CondExpr c;
-                            c= new CondExpr();
+                            c = new CondExpr();
                             c.fldNo = 2;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopGT);
                             c.type2 = new AttrType(AttrType.attrString);
                             c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                            c.operand2.string = words[5].substring(1, words[5].length()-1);
+                            c.operand2.string = words[5].substring(1, words[5].length() - 1);
                             select.add(c);
-                            c= new CondExpr();
+                            c = new CondExpr();
                             c.fldNo = 4;
                             c.type1 = new AttrType(AttrType.attrSymbol);
                             c.op = new AttrOperator(AttrOperator.aopLT);
                             c.type2 = new AttrType(AttrType.attrString);
                             c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                            c.operand2.string = words[6].substring(0, words[6].length()-1);
+                            c.operand2.string = words[6].substring(0, words[6].length() - 1);
                             select.add(c);
                             bufpage = Integer.parseInt(words[9]);
                             if (words[7].charAt(0) == '[') {
 
                                 // valFilter = words[7] + words[8];
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[7].substring(1, words[7].length()-1);
+                                c.operand2.string = words[7].substring(1, words[7].length() - 1);
                                 select.add(c);
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[8].substring(0, words[8].length()-1);
+                                c.operand2.string = words[8].substring(0, words[8].length() - 1);
                                 select.add(c);
                                 bufpage = Integer.parseInt(words[9]);
                                 bufpage = Integer.parseInt(words[9]);
                             } else {
                                 valFilter = words[7];
-                                if(!valFilter.equals("*")){
-                                    c= new CondExpr();
+                                if (!valFilter.equals("*")) {
+                                    c = new CondExpr();
                                     c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -240,9 +255,9 @@ public class BatchInsert {
                             }
                         } else {
                             colFilter = words[5];
-                            if(!colFilter.equals("*")){
+                            if (!colFilter.equals("*")) {
                                 CondExpr c;
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 2;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -254,28 +269,28 @@ public class BatchInsert {
                             if (words[6].charAt(0) == '[') {
                                 // valFilter = words[6] + words[7];
                                 CondExpr c;
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopGT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[6].substring(1, words[6].length()-1);
+                                c.operand2.string = words[6].substring(1, words[6].length() - 1);
                                 select.add(c);
-                                c= new CondExpr();
+                                c = new CondExpr();
                                 c.fldNo = 4;
                                 c.type1 = new AttrType(AttrType.attrSymbol);
                                 c.op = new AttrOperator(AttrOperator.aopLT);
                                 c.type2 = new AttrType(AttrType.attrString);
                                 c.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                                c.operand2.string = words[7].substring(0, words[7].length()-1);
+                                c.operand2.string = words[7].substring(0, words[7].length() - 1);
                                 select.add(c);
                                 bufpage = Integer.parseInt(words[8]);
                             } else {
                                 valFilter = words[6];
-                                if(!valFilter.equals("*")){
+                                if (!valFilter.equals("*")) {
                                     CondExpr c;
-                                    c= new CondExpr();
+                                    c = new CondExpr();
                                     c.fldNo = 4;
                                     c.type1 = new AttrType(AttrType.attrSymbol);
                                     c.op = new AttrOperator(AttrOperator.aopEQ);
@@ -290,13 +305,13 @@ public class BatchInsert {
                     }
                     // SystemDefs sysdef = new SystemDefs(fpath + dbname, 8000, bufpage, "Clock");
                     f = new bigt(dbname + String.valueOf(type));
-                    CondExpr[] newSel = new CondExpr[select.size()+1];
-                    for(int i = 0;i< select.size();i++){
+                    CondExpr[] newSel = new CondExpr[select.size() + 1];
+                    for (int i = 0; i < select.size(); i++) {
                         newSel[i] = select.get(i);
                     }
                     select.clear();
                     newSel[newSel.length - 1] = null;
-                    query(filename, type, order, newSel);
+                    query(bigTFileName, type, order, newSel);
                 } else if (words[0].equals("exit")) {
                     quit = true;
                 } else {
@@ -310,22 +325,26 @@ public class BatchInsert {
         }
     }
 
-    public static boolean batchInsert(String dbFileName, int type, String filepath) throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
-    InvalidSelectionException, IOException, UnknownKeyTypeException, GetFileEntryException,
-    ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
-    InvalidFrameNumberException, PageUnpinnedException, ReplacerException{
+    public static boolean batchInsert(String dbFileName, int type, String filepath)
+            throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
+            InvalidSelectionException, IOException, UnknownKeyTypeException, GetFileEntryException,
+            ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
+            InvalidFrameNumberException, PageUnpinnedException, ReplacerException {
         try {
             FileInputStream fin;
             short[] FldOffset = new short[5];
             fin = new FileInputStream(filepath);
             DataInputStream din = new DataInputStream(fin);
             BufferedReader bin = new BufferedReader(new InputStreamReader(din));
-            
+
             BTreeFile btf = null;
             BTreeFile btf2 = null;
             BTreeFile file2, file3;
 
-            f = new bigt(dbFileName+"_"+String.valueOf(type));
+            System.out.println("Starting Map Count" + f.getMapCnt());
+
+            // String filename = dbFileName+"_"+String.valueOf(type);
+            f = new bigt(dbFileName);
 
             btf = new BTreeFile("Adithya", 0, 100, 0);
             btf2 = new BTreeFile("AAAa", 1, 100, 0);
@@ -345,45 +364,45 @@ public class BatchInsert {
 
                     StringTokenizer sv = new StringTokenizer(token);
                     String rowLabel = sv.nextToken(",");
-                    maplength += 34; //(rowLabel.getBytes().length + 2);
+                    maplength += 34; // (rowLabel.getBytes().length + 2);
 
                     String columnLabel = sv.nextToken(",");
-                    maplength += 34; //(columnLabel.getBytes().length + 2);
+                    maplength += 34; // (columnLabel.getBytes().length + 2);
 
                     int timeStamp = Integer.parseInt(sv.nextToken(","));
                     maplength += 4;
 
                     String value = sv.nextToken(",");
-                    maplength += 34; //(value.getBytes().length + 2);
+                    maplength += 34; // (value.getBytes().length + 2);
 
                     byte[] mapData = new byte[maplength + 10];
 
                     int position = 10;
                     ConvertMap.setStrValue(rowLabel, position, mapData);
-                    position += 34; //rowLabel.getBytes().length + 2;
+                    position += 34; // rowLabel.getBytes().length + 2;
 
                     ConvertMap.setStrValue(columnLabel, position, mapData);
-                    position += 34; //columnLabel.getBytes().length + 2;
+                    position += 34; // columnLabel.getBytes().length + 2;
 
                     ConvertMap.setIntValue(timeStamp, position, mapData);
                     position += 4;
 
                     ConvertMap.setStrValue(value, position, mapData);
-                    position += 34; //value.getBytes().length + 2;
+                    position += 34; // value.getBytes().length + 2;
 
                     Map map = new Map(mapData, 0);
 
-                    map.setHdr(new short[] { 32,32,32}); //(short) rowLabel.getBytes().length, (short) columnLabel.getBytes().length,
-                            //(short) value.getBytes().length });
+                    map.setHdr(new short[] { 32, 32, 32 }); // (short) rowLabel.getBytes().length, (short)
+                                                            // columnLabel.getBytes().length,
+                    // (short) value.getBytes().length });
 
                     MID k = f.insertMap(map.getMapByteArray());
 
-
                     // System.out.println("Record No: " + count + ", MID: slt: " + k.slotNo + ",
                     // page:" + k.pageNo.pid);
-                    
+
                     // if (type == 1) {
-                    //     System.out.println("No type");
+                    // System.out.println("No type");
                     // }
                     if (type == 2) {
                         // System.out.println("starting point");
@@ -415,28 +434,26 @@ public class BatchInsert {
                         btf2.insert(new IntegerKey(keyt), k);
                     }
 
-
                 }
                 count++;
-                System.out.println(count);
+                // System.out.println(count);
             }
-            System.out.println("Hello "+ f.getMapCnt());
+            System.out.println("End Map Count " + f.getMapCnt());
 
-            file2 = new BTreeFile("Adithya");
-            BT.printBTree(btf.getHeaderPage());
-            BT.printAllLeafPages(btf.getHeaderPage());
-            // BT.printBTree(btf.new_scan(lo_key, hi_key));
+            // file2 = new BTreeFile("Adithya");
+            // BT.printBTree(btf.getHeaderPage());
+            // BT.printAllLeafPages(btf.getHeaderPage());
+            // // BT.printBTree(btf.new_scan(lo_key, hi_key));
 
-            if (type == 4 || type == 5) {
-                //file3 = new BTreeFile("AAAa", 1, 100, 0);
-                file3 = new BTreeFile("AAAa");
-                BT.printBTree(btf2.getHeaderPage());
-                BT.printAllLeafPages(btf2.getHeaderPage());
-            }
+            // if (type == 4 || type == 5) {
+            //     // file3 = new BTreeFile("AAAa", 1, 100, 0);
+            //     file3 = new BTreeFile("AAAa");
+            //     BT.printBTree(btf2.getHeaderPage());
+            //     BT.printAllLeafPages(btf2.getHeaderPage());
+            // }
 
-
-            System.out.println("Read counts: "+PCounter.rcounter);
-            System.out.println("Write counts: "+PCounter.wcounter);
+            System.out.println("Read counts: " + PCounter.rcounter);
+            System.out.println("Write counts: " + PCounter.wcounter);
             bin.close();
             System.out.println("Batchinsert finished!");
 
@@ -445,9 +462,7 @@ public class BatchInsert {
             e.printStackTrace();
         }
 
-        
-
-        //Map m = indexScan.get_next();
+        // Map m = indexScan.get_next();
 
         return true;
     }
@@ -455,14 +470,16 @@ public class BatchInsert {
     public static boolean query(String filename, int type, int order, CondExpr[] select)
             throws LowMemException, Exception {
         // Stream s = f.openStream(order, rowFilter, colFilter, valFilter);
+
         PCounter.initialize();
         int c = 0;
         CondExpr[] indexSelect = new CondExpr[2];
         indexSelect[0] = null;
         indexSelect[1] = null;
 
-        short[] s_sizes = {32,32,32};
-
+        short[] s_sizes = { 32, 32, 32 };
+        f = new bigt(filename);
+        System.out.println("Query Map Count" + f.getMapCnt());
         AttrType[] attrType = new AttrType[4];
         attrType[0] = new AttrType(AttrType.attrString);
         attrType[1] = new AttrType(AttrType.attrString);
@@ -470,40 +487,37 @@ public class BatchInsert {
         attrType[3] = new AttrType(AttrType.attrString);
         FldSpec[] proj_list = new FldSpec[4];
         RelSpec rel = new RelSpec(RelSpec.outer);
-        proj_list[0]= new FldSpec(rel, 1);
-        proj_list[1]= new FldSpec(rel, 2);
-        proj_list[2]= new FldSpec(rel, 3);
-        proj_list[3]= new FldSpec(rel, 4);
-        short[] attrSize = {32,32,32};
+        proj_list[0] = new FldSpec(rel, 1);
+        proj_list[1] = new FldSpec(rel, 2);
+        proj_list[2] = new FldSpec(rel, 3);
+        proj_list[3] = new FldSpec(rel, 4);
+        short[] attrSize = { 32, 32, 32 };
         BTreeFile btf;
         boolean done = false;
         Sort s = null;
 
-        if (type == 1){
-            
-            
-            System.out.println(Arrays.toString(select));
-            
+        if (type == 1) {
 
-            FileScan fileScan = new FileScan(filename, 1, new short[]{32,32,32}, 4, proj_list, select);
+            System.out.println(Arrays.toString(select));
+
+            FileScan fileScan = new FileScan(filename, 1, new short[] { 32, 32, 32 }, 4, proj_list, select);
             if (order != 0) {
                 s = new Sort(s_sizes, fileScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
             }
-            
+
             Map map = new Map();
             MID mid = new MID();
-            
+
             System.out.println();
-            while(!done){
-                if(order == 0){
+            while (!done) {
+                if (order == 0) {
                     map = fileScan.get_next();
-                }
-                else{
+                } else {
                     map = s.get_next();
                 }
-                if(map == null){
+                if (map == null) {
                     done = true;
-                }else{
+                } else {
                     map.print();
                     // System.out.println(map.getMapByteArray().length);
                     c++;
@@ -511,25 +525,25 @@ public class BatchInsert {
             }
             try {
                 fileScan.close();
-                if(s != null){
+                if (s != null) {
                     s.close();
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        
+
         if (type == 2) {
             btf = new BTreeFile("Adithya");
-            if (select != null){
+            if (select != null) {
                 int i = 0;
-                for(CondExpr condExpr : select){
-                    if (condExpr != null){
-                        if(condExpr.fldNo == 1){
-                            if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                for (CondExpr condExpr : select) {
+                    if (condExpr != null) {
+                        if (condExpr.fldNo == 1) {
+                            if (condExpr.op.attrOperator == AttrOperator.aopEQ) {
                                 indexSelect[0] = condExpr;
                                 indexSelect[1] = null;
-                            }else{
+                            } else {
                                 indexSelect[i] = condExpr;
                                 i++;
                             }
@@ -537,42 +551,42 @@ public class BatchInsert {
                     }
                 }
             }
-            try{
+            try {
                 IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if(order != 0){
+                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), filename, "Adithya", attrType,
+                        attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if (order != 0) {
                     s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
                 }
                 Map map = new Map();
                 System.out.println();
-                while(!done){
-                    
-                    if(order == 0){
+                while (!done) {
+
+                    if (order == 0) {
                         map = indexScan.get_next();
-                    }
-                    else{
+                    } else {
                         map = s.get_next();
                     }
-                    if(map == null){
+                    if (map == null) {
                         done = true;
-                    }else{
+                    } else {
                         map.print();
                         c++;
                     }
-                    
+
                 }
-                
+
                 btf.close();
                 btf.destroyFile();
                 try {
                     indexScan.close();
-                    if(s != null){
+                    if (s != null) {
                         s.close();
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -582,15 +596,15 @@ public class BatchInsert {
 
             // select[0] = select[1];
             // select[1] = null;
-            if (select != null){
+            if (select != null) {
                 int i = 0;
-                for(CondExpr condExpr : select){
-                    if (condExpr != null){
-                        if(condExpr.fldNo == 2){
-                            if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                for (CondExpr condExpr : select) {
+                    if (condExpr != null) {
+                        if (condExpr.fldNo == 2) {
+                            if (condExpr.op.attrOperator == AttrOperator.aopEQ) {
                                 indexSelect[0] = condExpr;
                                 indexSelect[1] = null;
-                            }else{
+                            } else {
                                 indexSelect[i] = condExpr;
                                 i++;
                             }
@@ -599,42 +613,42 @@ public class BatchInsert {
                 }
             }
 
-            try{
+            try {
                 IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if(order != 0){
+                indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), filename, "Adithya", attrType,
+                        attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if (order != 0) {
                     s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
                 }
                 Map map = new Map();
                 System.out.println();
-                while(!done){
-                    
-                    if(order == 0){
+                while (!done) {
+
+                    if (order == 0) {
                         map = indexScan.get_next();
-                    }
-                    else{
+                    } else {
                         map = s.get_next();
                     }
-                    if(map == null){
+                    if (map == null) {
                         done = true;
-                    }else{
+                    } else {
                         map.print();
                         c++;
                     }
-                    
+
                 }
-                
+
                 btf.close();
                 btf.destroyFile();
                 try {
                     indexScan.close();
-                    if(s != null){
+                    if (s != null) {
                         s.close();
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -645,59 +659,59 @@ public class BatchInsert {
             // select = new CondExpr[2];
             // select[0].operand2.string += select[1].operand2.string;
 
-            if (select != null){
+            if (select != null) {
                 int i = 0;
                 // for(CondExpr condExpr : select){
-                //     if (condExpr != null){
-                //         if(condExpr.fldNo == 2){
-                //             if(condExpr.op.attrOperator == AttrOperator.aopEQ){
-                //                 indexSelect[0] = condExpr;
-                //                 indexSelect[1] = null;
-                //             }else{
-                //                 indexSelect[i] = condExpr;
-                //                 i++;
-                //             }
-                //         }
-                //     }
+                // if (condExpr != null){
+                // if(condExpr.fldNo == 2){
+                // if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+                // indexSelect[0] = condExpr;
+                // indexSelect[1] = null;
+                // }else{
+                // indexSelect[i] = condExpr;
+                // i++;
+                // }
+                // }
+                // }
                 // }
             }
 
-            try{
+            try {
                 IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if(order != 0){
+                indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), filename, "Adithya",
+                        attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if (order != 0) {
                     s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
                 }
                 Map map = new Map();
                 System.out.println();
-                while(!done){
-                    
-                    if(order == 0){
+                while (!done) {
+
+                    if (order == 0) {
                         map = indexScan.get_next();
-                    }
-                    else{
+                    } else {
                         map = s.get_next();
                     }
-                    if(map == null){
+                    if (map == null) {
                         done = true;
-                    }else{
+                    } else {
                         map.print();
                         c++;
                     }
-                    
+
                 }
-                
+
                 btf.close();
                 btf.destroyFile();
                 try {
                     indexScan.close();
-                    if(s != null){
+                    if (s != null) {
                         s.close();
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -708,58 +722,58 @@ public class BatchInsert {
             // select[0].operand2.string += select[2].operand2.string;
             // select[1] = null;
             // if (select != null){
-            //     int i = 0;
-            //     for(CondExpr condExpr : select){
-            //         if (condExpr != null){
-            //             if(condExpr.fldNo == 1){
-            //                 if(condExpr.op.attrOperator == AttrOperator.aopEQ){
-            //                     indexSelect[0] = condExpr;
-            //                     indexSelect[1] = null;
-            //                 }else{
-            //                     indexSelect[i] = condExpr;
-            //                     i++;
-            //                 }
-            //             }
-            //         }
-            //     }
+            // int i = 0;
+            // for(CondExpr condExpr : select){
+            // if (condExpr != null){
+            // if(condExpr.fldNo == 1){
+            // if(condExpr.op.attrOperator == AttrOperator.aopEQ){
+            // indexSelect[0] = condExpr;
+            // indexSelect[1] = null;
+            // }else{
+            // indexSelect[i] = condExpr;
+            // i++;
+            // }
+            // }
+            // }
+            // }
             // }
 
             try {
                 IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), filename, "Adithya", attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if(order != 0){
+                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), filename, "Adithya", attrType,
+                        attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
+                if (order != 0) {
                     s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
                 }
                 Map map = new Map();
                 System.out.println();
-                while(!done){
-                    
-                    if(order == 0){
+                while (!done) {
+
+                    if (order == 0) {
                         map = indexScan.get_next();
-                    }
-                    else{
+                    } else {
                         map = s.get_next();
                     }
-                    if(map == null){
+                    if (map == null) {
                         done = true;
-                    }else{
+                    } else {
                         map.print();
                         c++;
                     }
-                    
+
                 }
-                
+
                 btf.close();
                 btf.destroyFile();
                 try {
                     indexScan.close();
-                    if(s != null){
+                    if (s != null) {
                         s.close();
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
