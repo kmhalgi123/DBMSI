@@ -36,6 +36,7 @@ public class BatchInsert {
 
         // SystemDefs sysdef = new SystemDefs(fpath + "bigdata", 8000, 500, "Clock");
 
+        SystemDefs sysdef = new SystemDefs(fpath + "bigdata", 8000, 500, "Clock");
         boolean quit = false;
         ArrayList<CondExpr> select = new ArrayList<>();
 
@@ -326,12 +327,13 @@ public class BatchInsert {
                 } else if (words[0].equals("exit")) {
                     quit = true;
                 } else if (words[0].equals("mapinsert")) {
-                    String dbname = words[5];
+                    int type = Integer.parseInt(words[5]); 
+                    String dbname = words[6];
                     String rl = words[1];
                     String cl = words[2];
                     String val = words[3];
                     int ts = Integer.parseInt(words[4]);
-                    int numbf = Integer.parseInt(words[6]);
+                    int numbf = Integer.parseInt(words[7]);
                     f = new bigt(dbname);
                     byte[] mapData = new byte[116];
 

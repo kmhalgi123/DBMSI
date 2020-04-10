@@ -773,6 +773,7 @@ public class bigt implements Filetype, GlobalConst {
                 }
                 // System.out.println("current queue size "+pq.size());
                 int c3 = 0;
+                
                 while (!pq.isEmpty()){
                     MapMID mm  = pq.poll();
                     if(c3 > 2){
