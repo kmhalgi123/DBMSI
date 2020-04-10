@@ -1,17 +1,15 @@
 package BigT;
 
-import global.ConvertMap;
-import global.GlobalConst;
-import global.MID;
-import global.MapOrder;
-import global.PageId;
-import global.SystemDefs;
+import global.*;
+import index.IndexScan;
+import iterator.*;
+import iterator.Iterator;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 
-import diskmgr.Page;
+import diskmgr.*;
+import btree.*;
 
 /** bigt class : creates bigt files and index files required. 
 *
@@ -104,7 +102,7 @@ public class bigt implements Filetype, GlobalConst {
         //  - no datapage pinned yet    
     }
 
-    public MID insertMap(byte[] recPtr) throws Exception
+    public MID mapInsert(byte[] recPtr) throws Exception
     {
         int dpinfoLen = 0;	
         int recLen = recPtr.length;
@@ -420,6 +418,228 @@ public class bigt implements Filetype, GlobalConst {
       
     }
 
+    public MID insertMap(byte[] recPtr) throws Exception{
+        int dpinfoLen = 0;	
+        int recLen = recPtr.length;
+        boolean found;
+        MID currentDataPageRid = new MID();
+        Page pageinbuffer = new Page();
+        BigPage currentDirPage = new BigPage();
+        BigPage currentDataPage = new BigPage();
+        
+        BigPage nextDirPage = new BigPage(); 
+        PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+        PageId nextDirPageId = new PageId();  // OK
+        
+        pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+        
+        found = false;
+        Map amap;
+        DataPageInfo dpinfo = new DataPageInfo();
+        while (found == false) { //Start While01
+            // look for suitable dpinfo-struct
+            for (currentDataPageRid = currentDirPage.firstMap();
+                currentDataPageRid != null;
+                currentDataPageRid = 
+                currentDirPage.nextMap(currentDataPageRid)) {
+                amap = currentDirPage.getMap(currentDataPageRid);
+                // System.out.println("AMAP: "+ConvertMap.getIntValue(0, amap.data));
+                dpinfo = new DataPageInfo(amap);
+                // System.out.println("AMAP: "+amap.getMapOffset());
+                // need check the record length == DataPageInfo'slength
+                
+                if(recLen <= dpinfo.availspace)
+                {
+                    // System.out.println("Ava"+dpinfo.pageId.pid);
+                    found = true;
+                    break;
+                }  
+	        }
+            // System.out.println(found);
+            // two cases:
+            // (1) found == true:
+            //     currentDirPage has a datapagerecord which can accomodate
+            //     the record which we have to insert
+            // (2) found == false:
+            //     there is no datapagerecord on the current directory page
+            //     whose corresponding datapage has enough space free
+            //     several subcases: see below
+            if(found == false) { 
+                //Start IF01
+                // case (2)
+                
+                //System.out.println("no datapagerecord on the current directory is OK");
+                //System.out.println("dirpage availspace "+currentDirPage.available_space());
+                
+                // on the current directory page is no datapagerecord which has
+                // enough free space
+                //
+                // two cases:
+                //
+                // - (2.1) (currentDirPage->available_space() >= sizeof(DataPageInfo):
+                //         if there is enough space on the current directory page
+                //         to accomodate a new datapagerecord (type DataPageInfo),
+                //         then insert a new DataPageInfo on the current directory
+                //         page
+                // - (2.2) (currentDirPage->available_space() <= sizeof(DataPageInfo):
+                //         look at the next directory page, if necessary, create it.
+            
+                if(currentDirPage.available_space() >= DataPageInfo.size) {
+                    //Start IF02
+                    // case (2.1) : add a new data page record into the
+                    //              current directory page
+                    currentDataPage = _newDatapage(dpinfo); 
+                    // currentDataPage is pinned! and dpinfo->pageId is also locked
+                    // in the exclusive mode  
+                    
+                    // didn't check if currentDataPage==NULL, auto exception
+                    
+                    
+                    // currentDataPage is pinned: insert its record
+                    // calling a HFPage function
+                    
+                    
+                    
+                    amap = dpinfo.convertToMap();
+                    
+                    byte [] tmpData = amap.getMapByteArray("di");
+                    currentDataPageRid = currentDirPage.insertMap(tmpData);
+                    // System.out.println("New: "+Arrays.toString(tmpData));
+                    // System.out.println("Dir: "+currentDataPageRid.slotNo + " "+currentDataPageRid.pageNo.pid);
+                    MID tmprid = currentDirPage.firstMap();
+                    
+            
+                    // need catch error here!
+                    if(currentDataPageRid == null)
+                        throw new HFException(null, "no space to insert rec.");  
+            
+                    // end the loop, because a new datapage with its record
+                    // in the current directorypage was created and inserted into
+                    // the heapfile; the new datapage has enough space for the
+                    // record which the user wants to insert
+            
+                    found = true;
+            
+                } //end of IF02
+                else {  
+                    //Start else 02
+                    // case (2.2)
+                    nextDirPageId = currentDirPage.getNextPage();
+                    // two sub-cases:
+                    //
+                    // (2.2.1) nextDirPageId != INVALID_PAGE:
+                    //         get the next directory page from the buffer manager
+                    //         and do another look
+                    // (2.2.2) nextDirPageId == INVALID_PAGE:
+                    //         append a new directory page at the end of the current
+                    //         page and then do another loop
+                        
+                    if (nextDirPageId.pid != INVALID_PAGE) {
+                        //Start IF03
+                        // case (2.2.1): there is another directory page:
+                        unpinPage(currentDirPageId, false);
+                        
+                        currentDirPageId.pid = nextDirPageId.pid;
+                        
+                        pinPage(currentDirPageId, currentDirPage, false);
+                        
+                        // now go back to the beginning of the outer while-loop and
+                        // search on the current directory page for a suitable datapage
+                    } //End of IF03
+                    else
+                    {  //Start Else03
+                        // case (2.2): append a new directory page after currentDirPage
+                        //             since it is the last directory page
+                        nextDirPageId = newPage(pageinbuffer, 1);
+                        // need check error!
+                        if(nextDirPageId == null)
+                            throw new HFException(null, "can't new pae");
+                
+                        // initialize new directory page
+                        nextDirPage.init(nextDirPageId, pageinbuffer);
+                        PageId temppid = new PageId(INVALID_PAGE);
+                        nextDirPage.setNextPage(temppid);
+                        nextDirPage.setPrevPage(currentDirPageId);
+                        
+                        // update current directory page and unpin it
+                        // currentDirPage is already locked in the Exclusive mode
+                        currentDirPage.setNextPage(nextDirPageId);
+                        unpinPage(currentDirPageId, true/*dirty*/);
+                        
+                        currentDirPageId.pid = nextDirPageId.pid;
+                        currentDirPage = new BigPage(nextDirPage);
+                
+                        // remark that MINIBASE_BM->newPage already
+                        // pinned the new directory page!
+                        // Now back to the beginning of the while-loop, using the
+                        // newly created directory page.
+                
+                    } //End of else03
+                } // End of else02
+                // ASSERTIONS:
+                // - if found == true: search will end and see assertions below
+                // - if found == false: currentDirPage, currentDirPageId
+                //   valid and pinned
+            
+            }//end IF01
+            else
+            { //Start else01
+                // found == true:
+                // we have found a datapage with enough space,
+                // but we have not yet pinned the datapage:
+                
+                // ASSERTIONS:
+                // - dpinfo valid
+                
+                // System.out.println("find the dirpagerecord on current page");
+                
+                pinPage(dpinfo.pageId, currentDataPage, false);
+                //currentDataPage.openHFpage(pageinbuffer);
+            
+            
+            }//End else01
+        } //end of While01
+      
+        // ASSERTIONS:
+        // - currentDirPageId, currentDirPage valid and pinned
+        // - dpinfo.pageId, currentDataPageRid valid
+        // - currentDataPage is pinned!
+        
+        if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
+	        throw new HFException(null, "invalid PageId");
+      
+        if (!(currentDataPage.available_space() >= recLen))
+	       throw new SpaceNotAvailableException(null, "no available space");
+      
+        if (currentDataPage == null)
+	        throw new HFException(null, "can't find Data page");
+      
+        MID rid;
+        
+        rid = currentDataPage.insertMap(recPtr);
+        dpinfo.recct++;
+        dpinfo.availspace = currentDataPage.available_space();
+
+        unpinPage(dpinfo.pageId, true /* = DIRTY */);
+
+        amap = currentDirPage.returnRecord(currentDataPageRid);;
+        DataPageInfo dpinfo_ondirpage = new DataPageInfo(amap);
+        
+        dpinfo_ondirpage.availspace = dpinfo.availspace;
+        dpinfo_ondirpage.recct = dpinfo.recct;
+        dpinfo_ondirpage.pageId.pid = dpinfo.pageId.pid;
+
+        ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
+        ConvertMap.setIntValue(dpinfo.recct, amap.getMapOffset()+4, amap.data);
+        ConvertMap.setIntValue(dpinfo.pageId.pid, amap.getMapOffset()+8, amap.data);
+
+        amap = currentDirPage.returnRecord(currentDataPageRid);
+        
+        unpinPage(currentDirPageId, true /* = DIRTY */);
+        
+        return rid;
+    }
+
     private BigPage _newDatapage(DataPageInfo dpinfop) throws HFException,
 	   HFBufMgrException,
 	   HFDiskMgrException,
@@ -442,7 +662,139 @@ public class bigt implements Filetype, GlobalConst {
         dpinfop.availspace = hfpage.available_space();
         
         return hfpage;
-      
+    }
+
+    public boolean batchInsert(String filepath, int type, String dbfile){
+        try{
+            FileInputStream fin;
+            short[] FldOffset = new short[5];
+            // takes the filepath
+            fin = new FileInputStream(filepath);
+            // input from file
+            DataInputStream din = new DataInputStream(fin);
+            BufferedReader bin = new BufferedReader(new InputStreamReader(din));
+            
+            // initialize btreefile
+            BTreeFile btf = null;
+
+            // open btree file with filename batchinsert file, used for row_column index
+            btf = new BTreeFile("batchinsert_file", 0, 100, 0);
+
+            String line;
+
+            int count = 0;
+            StringTokenizer st;
+            System.out.println("Batch Inserting records! Wait for few minutes!");
+            while ((line = bin.readLine()) != null) {
+                
+                
+                st = new StringTokenizer(line);
+
+                while (st.hasMoreTokens()) {
+                    String token = st.nextToken();
+
+                    StringTokenizer sv = new StringTokenizer(token);
+                    String rowLabel = sv.nextToken(",");
+
+                    String columnLabel = sv.nextToken(",");
+
+                    int timeStamp = Integer.parseInt(sv.nextToken(","));
+
+                    String value = sv.nextToken(",");
+
+                    byte[] mapData = new byte[116];
+
+                    ConvertMap.setStrValue(rowLabel, 10, mapData);
+                    ConvertMap.setStrValue(columnLabel, 44, mapData);
+                    ConvertMap.setIntValue(timeStamp, 78, mapData);
+                    ConvertMap.setStrValue(value, 82, mapData);
+
+                    Map map = new Map(mapData, 0);
+
+                    map.setHdr(new short[] { 32,32,32 }); 
+
+                    MID k = insertMap(map.getMapByteArray());
+                    
+                    String key1 = map.getRowLabel();
+                    String key2 = map.getColumnLabel();
+                    String key = key2 + key1;
+                    btf.insert(new StringKey(key), k);
+                    
+                }
+                count++;
+                System.out.println(count);
+            }
+            AttrType[] attrType = new AttrType[4];
+            attrType[0] = new AttrType(AttrType.attrString);
+            attrType[1] = new AttrType(AttrType.attrString);
+            attrType[2] = new AttrType(AttrType.attrInteger);
+            attrType[3] = new AttrType(AttrType.attrString);
+            FldSpec[] proj_list = new FldSpec[4];
+            RelSpec rel = new RelSpec(RelSpec.outer);
+            proj_list[0]= new FldSpec(rel, 1);
+            proj_list[1]= new FldSpec(rel, 2);
+            proj_list[2]= new FldSpec(rel, 3);
+            proj_list[3]= new FldSpec(rel, 4);
+            ArrayList<String> keyDone = new ArrayList<>();
+            PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator());
+            FileScan fs = new FileScan(dbfile, type, new short[]{32,32,32}, 4, proj_list, null);
+            boolean done = false;
+            while (!done) {
+                Map map = fs.get_next();
+                if(map == null){
+                    break;
+                }
+                map.mapSetup();
+                // map.print();
+                if(keyDone.contains(map.getColumnLabel() + map.getRowLabel())){
+                    continue;
+                }else{
+                    keyDone.add(map.getColumnLabel() + map.getRowLabel());
+                }
+                CondExpr[] ex = new CondExpr[2];
+                ex[0] = new CondExpr();
+                ex[0].fldNo = 1;
+                ex[0].type1 = new AttrType(AttrType.attrSymbol);
+                ex[0].op = new AttrOperator(AttrOperator.aopEQ);
+                ex[0].type2 = new AttrType(AttrType.attrString);
+                ex[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+                ex[0].operand2.string = map.getColumnLabel() + map.getRowLabel();
+                IndexScan iScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), dbfile, "batchinsert_file", attrType, new short[]{32,32,32}, 4, 4, proj_list, null, 2, false, ex);
+                boolean done2 = false;
+                int c2 = 0;
+                while(!done2){
+                    MapMID map2 = iScan.get_next_MapMid();
+                    if(map2 == null){
+                        break;
+                    }
+                    map2.getMap().print();
+                    c2++;
+                    pq.add(map2);
+                }
+                // System.out.println("current queue size "+pq.size());
+                int c3 = 0;
+                while (!pq.isEmpty()){
+                    MapMID mm  = pq.poll();
+                    if(c3 > 2){
+                        System.out.println(mm.getMap().getRowLabel());
+                        deleteMap(mm.getMID());
+                    }
+                    c3++;
+                }
+                
+                // System.out.println("current queue size after deletion"+pq.size());
+            }
+            System.out.println("Map Counts: "+getMapCnt());
+            System.out.println("Read counts: "+PCounter.rcounter);
+            System.out.println("Write counts: "+PCounter.wcounter);
+            bin.close();
+            // System.out.println("Batchinsert finished! Now Waiting for items to be deleted");
+
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+        }
+        return true;
     }
 
     private boolean  _findDataPage( MID rid,

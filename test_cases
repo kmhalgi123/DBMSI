@@ -66,6 +66,7 @@ query bigtable2 2 0 [California, Greece] [Camel, Mouse] * 100
 27. rr cr vr
 query bigtable2 2 0 [California, Greece] [Camel, Mouse] [1, 50] 100
 
+query bigtable2 2 0 * * * 100
 1 = rs cs vs
 2 = r* c* v*
 3 = rr cr vr

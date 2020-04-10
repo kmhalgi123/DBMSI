@@ -58,7 +58,7 @@ public class IndexScan extends Iterator {
     Jmap = new Map();
 
     try {
-    System.out.println("hey");
+    // System.out.println("hey");
     ts_sizes = MapUtils.setup_op_tuple(Jmap, Jtypes, str_sizes, outFlds, noOutFlds);
     } catch (MapUtilsException e) {
     throw new IndexException(e, "IndexScan.java: TupleUtilsException caught from MapUtils.setup_op_tuple()");
@@ -74,7 +74,7 @@ public class IndexScan extends Iterator {
     _noOutFlds = noOutFlds;
     map1 = new Map();
     try {
-      System.out.println(str_sizes.length);
+      // System.out.println(str_sizes.length);
       map1.setHdr(str_sizes);
     } catch (Exception e) {
       throw new IndexException(e, "IndexScan.java: Heapfile error");
@@ -289,6 +289,121 @@ public class IndexScan extends Iterator {
         try {
         Projection.Project(map1, Jmap, perm_mat, _noOutFlds);
         return Jmap;
+        } catch (Exception e) {
+        throw new IndexException(e, "IndexScan.java: Heapfile error");
+        }
+        
+
+      }
+
+      try {
+        nextentry = indScan.get_next();
+      } catch (Exception e) {
+        throw new IndexException(e, "IndexScan.java: BTree error");
+      }
+
+    }
+    return null;
+    // return Jmap;
+  }
+
+  public MapMID get_next_MapMid() throws IndexException, UnknownKeyTypeException, IOException {
+    MID mid;
+    int unused;
+    KeyDataEntry nextentry = null;
+
+    try {
+      nextentry = indScan.get_next();
+
+      // System.out.println(nextentry+ "next entry NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
+    } catch (Exception e) {
+      throw new IndexException(e, "IndexScan.java: BTree error");
+    }
+
+    while (nextentry != null) {
+      if (index_only) {
+        // only need to return the key
+
+        AttrType[] attrType = new AttrType[1];
+        short[] s_sizes = new short[1];
+
+        if (_types[_fldNum - 1].attrType == AttrType.attrInteger) {
+          attrType[0] = new AttrType(AttrType.attrInteger);
+          try {
+            Jmap.setHdr((_s_sizes));
+          } catch (Exception e) {
+            throw new IndexException(e, "IndexScan.java: Heapfile error");
+          }
+
+          try {
+            Jmap.setTimeStamp(((IntegerKey) nextentry.key).getKey().intValue());
+          } catch (Exception e) {
+            throw new IndexException(e, "IndexScan.java: Heapfile error");
+          }
+        } else if (_types[_fldNum - 1].attrType == AttrType.attrString) {
+
+          attrType[0] = new AttrType(AttrType.attrString);
+          // calculate string size of _fldNum
+          int count = 0;
+          for (int i = 0; i < _fldNum; i++) {
+            // System.out.println(_fldNum);
+            if (_types[i].attrType == AttrType.attrString)
+              count++;
+          }
+          s_sizes[0] = _s_sizes[count - 1];
+
+          try {
+            Jmap.setHdr(s_sizes);
+          } catch (Exception e) {
+            throw new IndexException(e, "IndexScan.java: Heapfile error");
+          }
+
+          try {
+            Jmap.setValue(((StringKey) nextentry.key).getKey());
+          } catch (Exception e) {
+            throw new IndexException(e, "IndexScan.java: Heapfile error");
+          }
+        } else {
+          // attrReal not supported for now
+          throw new UnknownKeyTypeException("Only Integer and String keys are supported so far");
+        }
+        return null;
+      }
+
+      // not index_only, need to return the whole tuple
+      mid = ((LeafData) nextentry.data).getData();
+      // System.out.println(mid.slotNo + "slont no");
+      // System.out.println(mid.pageNo + "page no");
+      // System.out.println("got the mid of nextentry");
+      try {
+        map1 = f.getMap(mid);
+        // map1 = stream.get_next(mid);
+        // map1.print();
+      } catch (Exception e) {
+        throw new IndexException(e, "IndexScan.java: getRecord failed");
+      }
+
+      // try {
+      // map1.setHdr(_s_sizes);
+      // } catch (Exception e) {
+      // throw new IndexException(e, "IndexScan.java: Heapfile error");
+      // }
+
+      boolean eval = true;
+      try {
+        map1.mapSetup();
+        eval = PredEval.Eval(_selects, map1, null);
+        // eval = true;
+      } catch (Exception e) {
+        throw new IndexException(e, "IndexScan.java: Heapfile error");
+      }
+
+      if (eval) {
+        // need projection.java
+        try {
+        Projection.Project(map1, Jmap, perm_mat, _noOutFlds);
+        MapMID mapMID = new MapMID(mid, map1);
+        return mapMID;
         } catch (Exception e) {
         throw new IndexException(e, "IndexScan.java: Heapfile error");
         }
