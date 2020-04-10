@@ -32,7 +32,7 @@ public class BatchInsert {
 
         PCounter.initialize();
         Scanner sc = new Scanner(System.in);
-        SystemDefs sysdef = new SystemDefs(fpath + "database", 500, 500, "Clock");
+        // SystemDefs sysdef = new SystemDefs(fpath + "database", 500, 500, "Clock");
 
         // SystemDefs sysdef = new SystemDefs(fpath + "bigdata", 8000, 500, "Clock");
 
@@ -382,7 +382,7 @@ public class BatchInsert {
     }
 
     // Row join function
-    // rowjoin join1 join2 outjoin column1 100
+    // rowjoin join1 join2 outjoin column2 100
     public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName)
             throws HFDiskMgrException, HFBufMgrException, HFException, IOException, InvalidTupleSizeException {
         
@@ -392,7 +392,8 @@ public class BatchInsert {
         
         f2.batchInsert("join2.csv", 1, "bigdata");
         Stream rightStream = f2.openStream();
-        PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator2());
+        PriorityQueue<MapMID> pq1 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
+        PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         MID mid = new MID();
         Boolean done = false;
         int c = 0;
@@ -409,7 +410,7 @@ public class BatchInsert {
                     mm.setMID(mid);
                     mm.setMap(m);
                 m.print();
-                pq.add(mm);
+                pq1.add(mm);
                 c++;
                 }
             }
@@ -431,12 +432,14 @@ public class BatchInsert {
         }
         System.out.println("polling highest value");
         // get highest timestamp for each row, check if they are equal
-        MapMID mm2  = pq.poll();
-        mm2.getMap().print();
+        // MapMID mm2  = pq.poll();
+        // mm2.getMap().print();
+        // while (!pq.isEmpty()) { 
+        //     pq.poll().getMap().print();
+            
+        // }
+
         pq.poll().getMap().print();
-        pq.poll().getMap().print();
-        pq.poll().getMap().print();
-        //pq.poll().getMap().print();
         // if they are equal, get the top 3 values.
 
 
