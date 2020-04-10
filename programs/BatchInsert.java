@@ -360,7 +360,7 @@ public class BatchInsert {
     // Row join function
     // rowjoin join1 join2 outjoin column1 100
     public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName)
-            throws HFDiskMgrException, HFBufMgrException, HFException, IOException, InvalidTupleSizeException {
+            throws Exception {
         
         
         f2 = new bigt(rightBigtName);
@@ -368,11 +368,13 @@ public class BatchInsert {
         
         f2.batchInsert("join2.csv", 1, "bigdata");
         Stream rightStream = f2.openStream();
-        PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator2());
+        PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
+        PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         MID mid = new MID();
         Boolean done = false;
         int c = 0;
         MapMID mm = new MapMID();
+        MapMID mm2 = new MapMID();
         while (!done) {
             Map m = leftStream.getNext(mid);
 
@@ -385,6 +387,8 @@ public class BatchInsert {
                     mm.setMID(mid);
                     mm.setMap(m);
                 m.print();
+                
+                outbt.insertMap(m.getMapByteArray());
                 pq.add(mm);
                 c++;
                 }
@@ -400,22 +404,47 @@ public class BatchInsert {
                 if (m.getColumnLabel().equalsIgnoreCase(columnName)){
 
                 m.mapSetup();
+                mm2.setMID(mid);
+                mm2.setMap(m);
                 m.print();
+                outbt.insertMap(m.getMapByteArray());
+                pq2.add(mm2);
                 c++;
                 }
             }
         }
         System.out.println("polling highest value");
         // get highest timestamp for each row, check if they are equal
-        MapMID mm2  = pq.poll();
+        mm = pq.poll();
+        mm.getMap().print();
+
+        System.out.println("polling highest value for join2");
+        // get highest timestamp for each row, check if they are equal
+        mm2  = pq2.poll();
         mm2.getMap().print();
-        pq.poll().getMap().print();
-        pq.poll().getMap().print();
-        pq.poll().getMap().print();
+
+        
+        //pq.poll().getMap().print();
+        //pq.poll().getMap().print();
+        //pq.poll().getMap().print();
         //pq.poll().getMap().print();
         // if they are equal, get the top 3 values.
 
-
+        done = false;
+        System.out.println("printing the joined map");
+        Stream outstream = outbt.openStream();
+        while (!done) {
+            
+            Map m = outstream.getNext(mid);
+            if (m == null) {
+                done = true;
+            } else {
+                m.mapSetup();
+                m.print();
+                c++;
+                
+            }
+        }
 
         // iterate through f1 and add them to outbt
         // remove the maps where recent values of column dont match
