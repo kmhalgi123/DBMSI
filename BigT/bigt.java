@@ -668,12 +668,16 @@ public class bigt implements Filetype, GlobalConst {
         try{
             FileInputStream fin;
             short[] FldOffset = new short[5];
+            // takes the filepath
             fin = new FileInputStream(filepath);
+            // input from file
             DataInputStream din = new DataInputStream(fin);
             BufferedReader bin = new BufferedReader(new InputStreamReader(din));
             
+            // initialize btreefile
             BTreeFile btf = null;
 
+            // open btree file with filename batchinsert file, used for row_column index
             btf = new BTreeFile("batchinsert_file", 0, 100, 0);
 
             String line;
@@ -682,7 +686,8 @@ public class bigt implements Filetype, GlobalConst {
             StringTokenizer st;
             System.out.println("Batch Inserting records! Wait for few minutes!");
             while ((line = bin.readLine()) != null) {
-
+                
+                
                 st = new StringTokenizer(line);
 
                 while (st.hasMoreTokens()) {
