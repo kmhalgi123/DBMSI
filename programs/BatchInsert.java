@@ -15,6 +15,7 @@ import diskmgr.PCounter;
 import global.*;
 import iterator.*;
 import index.*;
+
 // batchinsert project2_testdata.csv 2 bigtable2
 // batchinsert small1.csv 2 bigtable2
 // batchinsert small2.csv 2 bigtable2
@@ -336,7 +337,7 @@ public class BatchInsert {
                     String btname2 = words[2];
                     outbtname = words[3];
                     String columnName = words[4];
-                    String  numbuf = words[5];
+                    String numbuf = words[5];
                     int amt_of_mem = Integer.parseInt(numbuf);
                     f1 = new bigt(btname1);
 
@@ -359,8 +360,8 @@ public class BatchInsert {
 
     // Row join function
     // rowjoin join1 join2 outjoin column1 100
-    public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName)
-            throws Exception {
+    
+    public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName) throws Exception {
         
         
         f2 = new bigt(rightBigtName);
@@ -371,7 +372,11 @@ public class BatchInsert {
         PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         MID mid = new MID();
+        MID mid1 = new MID();
+        MID mid2 = new MID();
         Boolean done = false;
+        Boolean done1 = false;
+        Boolean done2 = false;
         int c = 0;
         MapMID mm = new MapMID();
         MapMID mm2 = new MapMID();
@@ -388,7 +393,7 @@ public class BatchInsert {
                     mm.setMap(m);
                 m.print();
                 
-                outbt.insertMap(m.getMapByteArray());
+                //outbt.insertMap(m.getMapByteArray());
                 pq.add(mm);
                 c++;
                 }
@@ -407,12 +412,13 @@ public class BatchInsert {
                 mm2.setMID(mid);
                 mm2.setMap(m);
                 m.print();
-                outbt.insertMap(m.getMapByteArray());
+                //outbt.insertMap(m.getMapByteArray());
                 pq2.add(mm2);
                 c++;
                 }
             }
         }
+        // using nested while loop for R1:R2 format
         System.out.println("polling highest value");
         // get highest timestamp for each row, check if they are equal
         mm = pq.poll();
@@ -422,45 +428,95 @@ public class BatchInsert {
         // get highest timestamp for each row, check if they are equal
         mm2  = pq2.poll();
         mm2.getMap().print();
+        Map combined = null;
+       if(mm.getMap().getValue().equals(mm2.getMap().getValue()))
+       {
+           combined = new Map();
+           combined.setRowLabel(mm.getMap().getRowLabel()+mm2.getMap().getRowLabel());
+           combined.setColumnLabel(mm.getMap().getColumnLabel());
+           if(mm.getMap().getTimeStamp() > mm2.getMap().getTimeStamp())           
+                combined.setTimeStamp(mm.getMap().getTimeStamp());
+            else 
+                combined.setTimeStamp(mm2.getMap().getTimeStamp());
+           combined.setValue(mm.getMap().getValue());
+           outbt.insertMap(combined.getMapByteArray());
+           
+       }
+  
 
-        
-        //pq.poll().getMap().print();
+       System.out.println("combined output");
+       done = false;
+       Stream stream = outbt.openStream();
+       while (!done) {
+           Map m = stream.getNext(mid);
+           if (m == null) {
+               done = true;
+           } else {
+               if (m.getColumnLabel().equalsIgnoreCase(columnName)){
+
+               m.mapSetup();
+               //mm2.setMID(mid);
+               //jmm2.setMap(m);
+               m.print();
+               //outbt.insertMap(m.getMapByteArray());
+               //pq2.add(mm2);
+               c++;
+               }
+           }
+       }
+
+   //pq.poll().getMap().print();
         //pq.poll().getMap().print();
         //pq.poll().getMap().print();
         //pq.poll().getMap().print();
         // if they are equal, get the top 3 values.
 
-        done = false;
-        System.out.println("printing the joined map");
-        Stream outstream = outbt.openStream();
-        while (!done) {
+        // not printing outbt rightnow
+        // done = false;
+        // System.out.println("printing the joined map");
+        // Stream outstream = outbt.openStream();
+        // while (!done) {
             
-            Map m = outstream.getNext(mid);
-            if (m == null) {
-                done = true;
-            } else {
-                m.mapSetup();
-                m.print();
-                c++;
+        //     Map m = outstream.getNext(mid);
+        //     if (m == null) {
+        //         done = true;
+        //     } else {
+        //         m.mapSetup();
+        //         m.print();
+        //         c++;
                 
-            }
-        }
+        //     }
+
+            // use inner while loop
+
+            
+        // }
+     
+        
+     
 
         // iterate through f1 and add them to outbt
-        // remove the maps where recent values of column dont match
-        // remove the column which is repeated twice (the common column)
+    // remove the maps where recent values of column dont match
+    // remove the column which is repeated twice (the common column)
 
-        return true;
+    return true;
+
     }
+    
 
-    // public static boolean batchInsert(String dbFileName, int type, String filepath) throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
-    // InvalidSelectionException, IOException, UnknownKeyTypeException, GetFileEntryException,
-    // ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
-    // InvalidFrameNumberException, PageUnpinnedException, ReplacerException, HFDiskMgrException,
+    // public static boolean batchInsert(String dbFileName, int type, String
+    // filepath) throws IndexException, InvalidTypeException,
+    // InvalidTupleSizeException, UnknownIndexTypeException,
+    // InvalidSelectionException, IOException, UnknownKeyTypeException,
+    // GetFileEntryException,
+    // ConstructPageException, AddFileEntryException, IteratorException,
+    // HashEntryNotFoundException,
+    // InvalidFrameNumberException, PageUnpinnedException, ReplacerException,
+    // HFDiskMgrException,
     // HFBufMgrException, HFException {
-    //     f = new bigt(dbFileName+"_"+String.valueOf(type));
-    //     f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
-    //     return true;
+    // f = new bigt(dbFileName+"_"+String.valueOf(type));
+    // f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
+    // return true;
     // }
 
     public static boolean query(String filename, int type, int order, CondExpr[] select)
