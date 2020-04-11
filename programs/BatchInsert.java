@@ -414,7 +414,6 @@ public class BatchInsert {
                 
                 outbt.insertMap(m.getMapByteArray());
                 pq.add(mm);
-                c++;
                 }
             }
         }
@@ -433,7 +432,6 @@ public class BatchInsert {
                 m.print();
                 outbt.insertMap(m.getMapByteArray());
                 pq2.add(mm2);
-                c++;
                 }
             }
         }
@@ -441,31 +439,25 @@ public class BatchInsert {
         // get highest timestamp for each row, check if they are equal
         mm = pq.poll();
         mm.getMap().print();
-
+        
         System.out.println("polling highest value for join2");
         // get highest timestamp for each row, check if they are equal
-        mm2  = pq2.poll();
+        mm2 = pq2.poll();
         mm2.getMap().print();
 
-        
-        //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
+  
         // if they are equal, get the top 3 values.
 
         done = false;
         System.out.println("printing the joined map");
         Stream outstream = outbt.openStream();
         while (!done) {
-            
             Map m = outstream.getNext(mid);
             if (m == null) {
                 done = true;
             } else {
                 m.mapSetup();
                 m.print();
-                c++;
                 
             }
         }
