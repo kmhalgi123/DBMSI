@@ -363,15 +363,17 @@ public class BatchInsert {
     
     public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName) throws Exception {
         
-        
+        // opening the right bigt and outbt
         f2 = new bigt(rightBigtName);
         outbt = new bigt(outbtname);
         
+        //insert data into rightbt and open the stream
         f2.batchInsert("join2.csv", 1, "bigdata");
-        Stream rightStream = f2.openStream();
+        Stream rightStream;
+        // start priority queue on both left and right bigt because we need to compare the latest values from each row in left and right streams
         PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
-        MID mid = new MID();
+        MID mid = new MID();  
         MID mid1 = new MID();
         MID mid2 = new MID();
         Boolean done = false;
@@ -380,68 +382,176 @@ public class BatchInsert {
         int c = 0;
         MapMID mm = new MapMID();
         MapMID mm2 = new MapMID();
-        while (!done) {
-            Map m = leftStream.getNext(mid);
 
-            //MID m2 =  mm.getMID();
-            if (m == null) {
-                done = true;
-            } else {
-                if (m.getColumnLabel().equalsIgnoreCase(columnName)){
-                    m.mapSetup();
-                    mm.setMID(mid);
-                    mm.setMap(m);
-                m.print();
+        Boolean leftdone = false;
+        MID leftmid = new MID();
+        Boolean rightdone = false;
+        MID rightmid;
+        outer: while (!leftdone) {
+            //System.out.println("into outer");
+            Map leftmap = leftStream.getNext(leftmid);
+            if (leftmap == null) {
+                leftdone = true;
+                //System.out.println("breaking outer");
+                break outer;
+            }
+            rightdone = false;
+            rightmid = new MID();
+            rightStream = f2.openStream();
+            inner: while(!rightdone){
+ 
+                Map rightmap = rightStream.getNext(rightmid);
+                if(rightmap == null){
+                    //System.out.println("hello");
+                    rightdone = true;
+                    break inner;
+                }
+                //System.out.println(leftmap.getColumnLabel());
+                //System.out.println(rightmap.getColumnLabel());
+                if (leftmap.getColumnLabel().equalsIgnoreCase(rightmap.getColumnLabel())){
+                    if (leftmap.getColumnLabel().equalsIgnoreCase(columnName)){
+                        // add left map
+                        Map combined_map = new Map(); 
+
+                        short sizes[] = new short[4]; //[s1,s2,s3,s4];
+                         
+                        String a  = leftmap.getRowLabel().trim();
+                        String b = leftmap.getColumnLabel();
+                        int e = leftmap.getTimeStamp();
+                        String d = leftmap.getValue();
+                        a.replaceAll("^\\s+|\\s+$", "");
+                        System.out.print("#############");
+                        System.out.println(a);
+                        System.out.println(b);
+                        System.out.println(e);
+                        System.out.println(d);
+                        sizes[0] = (short) (leftmap.getRowLabel().length());
+                        sizes[1] = (short) (leftmap.getColumnLabel().length());
+                        sizes[2] = (short) 2;
+                        sizes[3] = (short) (leftmap.getValue().length());
+                        
+                        combined_map.setHdr(sizes);
+                        String newRowLabel = leftmap.getRowLabel()+rightmap.getRowLabel();
+                        // combined_map.setRowLabel(leftmap.getRowLabel()+rightmap.getRowLabel());
+                        // combined_map.setColumnLabel(leftmap.getColumnLabel());
+                        // combined_map.setTimeStamp(leftmap.getTimeStamp());
+                        // combined_map.setValue(leftmap.getValue());
+                        
+                        
+                        combined_map.setRowLabel(a);
+                        combined_map.setColumnLabel(b);
+                        combined_map.setTimeStamp(e);
+                        combined_map.setValue(d);
+                        combined_map.mapSetup();
+                        
+
+                        combined_map.print();
+
+                        outbt.insertMap(combined_map.getMapByteArray());
+                        
+                        // add right map
+                        combined_map = new Map();
+                        combined_map.setRowLabel(leftmap.getRowLabel()+rightmap.getRowLabel());
+                        combined_map.setColumnLabel(rightmap.getColumnLabel());
+                        combined_map.setValue(rightmap.getValue());
+                        combined_map.setTimeStamp(rightmap.getTimeStamp());
+                        combined_map.mapSetup();
+                        combined_map.print();
+                        outbt.insertMap(combined_map.getMapByteArray());
+
+                        // only have top 3 values
+                            // top 3 condition yet to be added
+                    }
+                    else{  //if onlt left and right map columns are equal, but not equal to given column name
+                        // add left map
+                        Map combined_map = new Map();
+                        combined_map.setRowLabel(leftmap.getRowLabel()+rightmap.getRowLabel());
+                        combined_map.setColumnLabel(leftmap.getColumnLabel());
+                        combined_map.setValue(leftmap.getValue());
+                        combined_map.setTimeStamp(leftmap.getTimeStamp());
+                        outbt.insertMap(combined_map.getMapByteArray());
+                        // add right map
+                        combined_map = new Map();
+                        combined_map.setRowLabel(leftmap.getRowLabel()+rightmap.getRowLabel());
+                        combined_map.setColumnLabel(rightmap.getColumnLabel());
+                        combined_map.setValue(rightmap.getValue());
+                        combined_map.setTimeStamp(rightmap.getTimeStamp());
+                        outbt.insertMap(combined_map.getMapByteArray());
+                        
+                    }
+                }
+            }
+
+        }
+
+
+
+    //     // iterate through every map in left stream
+    //     while (!done) {
+    //         Map m = leftStream.getNext(mid1);
+
+    //         //MID m2 =  mm.getMID();
+    //         if (m == null) {
+    //             done = true;
+    //         } else {
+    //             // if the column name of map from left stream matches given column name, then consider only top 3 values
+    //             // so while adding we poll the highes value and look at the count, if count is > 3, just remove the highest value
+    //             if (m.getColumnLabel().equalsIgnoreCase(columnName)){
+    //                 m.mapSetup();
+    //                 mm.setMID(mid1);
+    //                 mm.setMap(m);
+    //             m.print();
                 
-                //outbt.insertMap(m.getMapByteArray());
-                pq.add(mm);
-                c++;
-                }
-            }
-        }
-        System.out.println("break here");
-        done = false;
-        while (!done) {
-            Map m = rightStream.getNext(mid);
-            if (m == null) {
-                done = true;
-            } else {
-                if (m.getColumnLabel().equalsIgnoreCase(columnName)){
+    //             //outbt.insertMap(m.getMapByteArray());
+    //             pq.add(mm);
+    //             c++;
+    //             }
+    //         }
+    //     }
+        
+    //     System.out.println("break here");
+    //     done = false;
+    //     while (!done) {
+    //         Map m = rightStream.getNext(mid2);
+    //         if (m == null) {
+    //             done = true;
+    //         } else {
+    //             if (m.getColumnLabel().equalsIgnoreCase(columnName)){
 
-                m.mapSetup();
-                mm2.setMID(mid);
-                mm2.setMap(m);
-                m.print();
-                //outbt.insertMap(m.getMapByteArray());
-                pq2.add(mm2);
-                c++;
-                }
-            }
-        }
-        // using nested while loop for R1:R2 format
-        System.out.println("polling highest value");
-        // get highest timestamp for each row, check if they are equal
-        mm = pq.poll();
-        mm.getMap().print();
+    //             m.mapSetup();
+    //             mm2.setMID(mid2);
+    //             mm2.setMap(m);
+    //             m.print();
+    //             //outbt.insertMap(m.getMapByteArray());
+    //             pq2.add(mm2);
+    //             c++;
+    //             }
+    //         }
+    //     }
+    //     // using nested while loop for R1:R2 format
+    //     System.out.println("polling highest value");
+    //     // get highest timestamp for each row, check if they are equal
+    //     mm = pq.poll();
+    //     mm.getMap().print();
 
-        System.out.println("polling highest value for join2");
-        // get highest timestamp for each row, check if they are equal
-        mm2  = pq2.poll();
-        mm2.getMap().print();
-        Map combined = null;
-       if(mm.getMap().getValue().equals(mm2.getMap().getValue()))
-       {
-           combined = new Map();
-           combined.setRowLabel(mm.getMap().getRowLabel()+mm2.getMap().getRowLabel());
-           combined.setColumnLabel(mm.getMap().getColumnLabel());
-           if(mm.getMap().getTimeStamp() > mm2.getMap().getTimeStamp())           
-                combined.setTimeStamp(mm.getMap().getTimeStamp());
-            else 
-                combined.setTimeStamp(mm2.getMap().getTimeStamp());
-           combined.setValue(mm.getMap().getValue());
-           outbt.insertMap(combined.getMapByteArray());
+    //     System.out.println("polling highest value for join2");
+    //     // get highest timestamp for each row, check if they are equal
+    //     mm2  = pq2.poll();
+    //     mm2.getMap().print();
+    //     Map combined = null;
+    //    if(mm.getMap().getValue().equals(mm2.getMap().getValue()))
+    //    {
+    //        combined = new Map();
+    //        combined.setRowLabel(mm.getMap().getRowLabel()+mm2.getMap().getRowLabel());
+    //        combined.setColumnLabel(mm.getMap().getColumnLabel());
+    //        if(mm.getMap().getTimeStamp() > mm2.getMap().getTimeStamp())           
+    //             combined.setTimeStamp(mm.getMap().getTimeStamp());
+    //         else 
+    //             combined.setTimeStamp(mm2.getMap().getTimeStamp());
+    //        combined.setValue(mm.getMap().getValue());
+    //        outbt.insertMap(combined.getMapByteArray());
            
-       }
+    //    }
   
 
        System.out.println("combined output");
@@ -453,7 +563,6 @@ public class BatchInsert {
                done = true;
            } else {
                if (m.getColumnLabel().equalsIgnoreCase(columnName)){
-
                m.mapSetup();
                //mm2.setMID(mid);
                //jmm2.setMap(m);

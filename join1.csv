@@ -6,9 +6,3 @@ r1,column3,67291,3
 r2,column4,13048,7
 r2,column2,57082,10
 r2,column2,87082,10
-
-// if the column matches and recent values match, we select only top 3 values
-
-// if the column doesnt match, then we add everything
-
-// if the column matches and recent values dont match, then we add everything
