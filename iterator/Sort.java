@@ -54,6 +54,7 @@ public class Sort extends Iterator implements GlobalConst
   private String       _colname;
   private ArrayList<pnode> arrayList;
   private int          current_row_max_int = 0;
+  private PriorityQueue Qs;
   private boolean useBM = true; // flag for whether to use buffer manager
   
   /**

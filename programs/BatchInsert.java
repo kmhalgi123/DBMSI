@@ -289,7 +289,7 @@ public class BatchInsert {
                     }
                     select.clear();
                     newSel[newSel.length - 1] = null;
-                    query(dbname, order, newSel);
+                    query(dbname, order, newSel, bufpage);
                 } else if (words[0].equals("exit")) {
                     quit = true;
                 } else if (words[0].equals("mapinsert")) {
@@ -344,7 +344,7 @@ public class BatchInsert {
     public static void rowSort(String inbtname, String outbtname, String colname, int numbf)
             throws UnknowAttrType, LowMemException, JoinsException, Exception {
         short[] s_sizes = {32,32,32};
-
+        bigt outBigt = new bigt(outbtname);
         AttrType[] attrType = new AttrType[4];
         attrType[0] = new AttrType(AttrType.attrString);
         attrType[1] = new AttrType(AttrType.attrString);
@@ -356,14 +356,15 @@ public class BatchInsert {
         proj_list[1]= new FldSpec(rel, 2);
         proj_list[2]= new FldSpec(rel, 3);
         proj_list[3]= new FldSpec(rel, 4);
-        short[] attrSize = {32,32,32};
         FileScan fs = new FileScan(inbtname, 1, s_sizes, 4, proj_list, null);
-        Sort s = new Sort(fs, 1, new MapOrder(MapOrder.Ascending), 32, 300, 1, colname, inbtname);
+        Sort s = new Sort(fs, 1, new MapOrder(MapOrder.Ascending), 32, numbf, 1, colname, inbtname);
         while(true){
             Map m = s.get_next();
             if(m == null) break;
+            outBigt.insertMap(m.getMapByteArray());
             m.print();
         }
+        s.close();
     }
 
     public static boolean batchInsert(String dbFileName, int type, String filepath) throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
@@ -371,17 +372,17 @@ public class BatchInsert {
     ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
     InvalidFrameNumberException, PageUnpinnedException, ReplacerException, HFDiskMgrException,
     HFBufMgrException, HFException {
-        BTreeFile btf2 = new BTreeFile(dbFileName+"_2", 0, 100, 0);
-        BTreeFile btf3 = new BTreeFile(dbFileName+"_3", 0, 100, 0);
-        BTreeFile btf4 = new BTreeFile(dbFileName+"_4", 0, 100, 0);
-        BTreeFile btf5 = new BTreeFile(dbFileName+"_5", 0, 100, 0);
-        BTreeFile btf_insert = new BTreeFile(dbFileName+"_insert", 0, 100, 0);
+        BTreeFile btf2 = new BTreeFile(dbFileName+"_2", 0, 100, DeleteFashion.NAIVE_DELETE);
+        BTreeFile btf3 = new BTreeFile(dbFileName+"_3", 0, 100, DeleteFashion.NAIVE_DELETE);
+        BTreeFile btf4 = new BTreeFile(dbFileName+"_4", 0, 100, DeleteFashion.NAIVE_DELETE);
+        BTreeFile btf5 = new BTreeFile(dbFileName+"_5", 0, 100, DeleteFashion.NAIVE_DELETE);
+        BTreeFile btf_insert = new BTreeFile(dbFileName+"_insert", 0, 100, DeleteFashion.NAIVE_DELETE);
         f = new bigt(dbFileName);
         f.batchInsert(filepath, type, dbFileName);
         return true;
     }
 
-    public static boolean query(String filename, int order, CondExpr[] select)
+    public static boolean query(String filename, int order, CondExpr[] select, int numbuf)
             throws LowMemException, Exception {
         PCounter.initialize();
         int c = 0;
@@ -421,7 +422,7 @@ public class BatchInsert {
             c++;
         }
         try {
-            fileScan.close();
+            // fileScan.close();
             s.close();
         } catch (Exception e){
             e.printStackTrace();
