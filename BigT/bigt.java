@@ -102,9 +102,13 @@ public class bigt implements Filetype, GlobalConst {
         //  - no datapage pinned yet    
     }
 
-    public MID mapInsert(byte[] recPtr) throws Exception
+    public MID mapInsert(byte[] recPtr, String filename, int type) throws Exception
     {
-        int dpinfoLen = 0;	
+        BTreeFile btf = null;
+        if(type != 1){
+            btf = new BTreeFile(filename+"_"+String.valueOf(type));
+        }
+        int dpinfoLen = 0;
         int recLen = recPtr.length;
         boolean found;
         MID currentDataPageRid = new MID();
@@ -304,19 +308,17 @@ public class bigt implements Filetype, GlobalConst {
         MID rid;
         int givenstamp=2147483647, count = 0;
         MID to_deleteMid = null;
+        Map akmap = new Map(recPtr, 0);
+        akmap.mapSetup();
+        String givenRow = akmap.getRowLabel();
+        String givenCol = akmap.getColumnLabel();
+        String givenVal = akmap.getValue();
         try{
             
             PageId cuDirPageId = new PageId(_firstDirPageId.pid);
             BigPage cuDirPage = new BigPage();
             BigPage cuDataPage = new BigPage();
-            Map akmap = new Map(recPtr, 0);
-            akmap.mapSetup();
-            // System.out.println(Arrays.toString(akmap.getFldOffset()));
-            String givenRow = akmap.getRowLabel();
-            // System.out.println(givenRow);
-            String givenCol = akmap.getColumnLabel();
-            
-            
+                        
             String row,column;
             thisloop: while(cuDirPageId.pid != INVALID_PAGE)
             {
@@ -329,26 +331,20 @@ public class bigt implements Filetype, GlobalConst {
                     rid = cuDirPage.nextMap(rid))
                 {
                     aMap = cuDirPage.getMap(rid);
-                    // DataPageInfo dInfo = new DataPageInfo(aMap);
                     PageId page = new PageId(ConvertMap.getIntValue(aMap.getMapOffset()+8, aMap.data));
                     pinPage(page, cuDataPage, false);
-                    // pinPage(dInfo.pageId, cuDataPage, false);
                     for(MID mid = cuDataPage.firstMap(); mid != null; mid = cuDataPage.nextMap(mid)){
                         Map m = cuDataPage.getMap(mid);
-                        // System.out.println("here"); 
                         m.mapSetup();
                         row = m.getRowLabel();
                         column = m.getColumnLabel();
                         if (row.equals(givenRow) && column.equals(givenCol)) {
                             count++;
-                            // System.out.println(count);
                             if(m.getTimeStamp() < givenstamp){
                                 to_deleteMid = mid;
                                 givenstamp = m.getTimeStamp();
                             }
                             if (count == 3){
-
-                                // System.out.println(row + " "+ column);
                                 unpinPage(page, false);
                                 break thisloop;
                             }
@@ -365,49 +361,42 @@ public class bigt implements Filetype, GlobalConst {
                 unpinPage(cuDirPageId, false /*undirty*/);
                 cuDirPageId.pid = nextDirPageId.pid;
             }
-        }catch(Exception e){}
-        // Add array iterations over here
-        // System.out.println("here");
-        
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
         rid = currentDataPage.insertMap(recPtr);
+        if(type == 2){
+            String key = givenRow;
+            btf.insert(new StringKey(key), rid);
+        }else if(type == 3){
+            String key = givenCol;
+            btf.insert(new StringKey(key), rid);
+        }else if(type == 4){
+            String key = givenCol+givenRow;
+            btf.insert(new StringKey(key), rid);
+        }else if(type == 5){
+            String key = givenRow+givenVal;
+            btf.insert(new StringKey(key), rid);
+        }
+        
         dpinfo.recct++;
         dpinfo.availspace = currentDataPage.available_space();
-        // System.out.println("Ac"+dpinfo.availspace);
-        // dpinfo.flushToMap();
-        // try {
         unpinPage(dpinfo.pageId, true /* = DIRTY */);
-        // }catch (Exception e){}
         
         // DataPage is now released
         amap = currentDirPage.returnRecord(currentDataPageRid);
-        // System.out.println("URR"+amap.getMapOffset());
-        // // System.out.println("Dir: "+amap.data.length+" "+Arrays.toString(amap.data)+ " "+amap.getMapOffset());
-        // byte[] newb = new byte[12];
-        // System.arraycopy(amap.data, 1012, newb, 0, 12);
+        
         DataPageInfo dpinfo_ondirpage = new DataPageInfo(amap);
-        // System.out.println("DPOI"+dpinfo_ondirpage.availspace);
         
         dpinfo_ondirpage.availspace = dpinfo.availspace;
         dpinfo_ondirpage.recct = dpinfo.recct;
         dpinfo_ondirpage.pageId.pid = dpinfo.pageId.pid;
-        // dpinfo_ondirpage.flushToMap();
-        // byte[] newb = new byte[12];
+
         ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
         ConvertMap.setIntValue(dpinfo.recct, amap.getMapOffset()+4, amap.data);
         ConvertMap.setIntValue(dpinfo.pageId.pid, amap.getMapOffset()+8, amap.data);
 
-        amap = currentDirPage.returnRecord(currentDataPageRid);
-        // System.out.println("After Flush: "+Arrays.toString(amap.data));
-        // byte[] newbpublic void deleteFile()  
-        // ConvertMap.setIntValue(dpinfo.availspace, 0, newb);
-        // ConvertMap.setIntValue(dpinfo.recct, 4, newb);
-        // ConvertMap.setIntValue(dpinfo.pageId.pid, 8, newb);
-
-        // dpinfo.flushToMap();
-        // updateMap(currentDataPageRid, new Map(newb,0));
-        // System.out.println("Data:"+dpinfo_ondirpage.availspace);
-        // System.arraycopy(newb, 0, currentDirPage.getMap(currentDataPageRid).data, 0, 12);
         unpinPage(currentDirPageId, true /* = DIRTY */);
         
         if(count == 3){
@@ -672,10 +661,13 @@ public class bigt implements Filetype, GlobalConst {
             DataInputStream din = new DataInputStream(fin);
             BufferedReader bin = new BufferedReader(new InputStreamReader(din));
             
-            BTreeFile btf = null;
-
-            btf = new BTreeFile("batchinsert_file", 0, 100, 0);
-
+            BTreeFile btf = new BTreeFile(dbfile+"_insert");
+            BTreeFile cubif = null;
+            BTreeFile btf2 = new BTreeFile(dbfile+"_2");
+            BTreeFile btf3 = new BTreeFile(dbfile+"_3");
+            BTreeFile btf4 = new BTreeFile(dbfile+"_4");
+            BTreeFile btf5 = new BTreeFile(dbfile+"_5");
+            bigt samplebigt = new bigt("tempBigt");
             String line;
 
             int count = 0;
@@ -690,11 +682,8 @@ public class bigt implements Filetype, GlobalConst {
 
                     StringTokenizer sv = new StringTokenizer(token);
                     String rowLabel = sv.nextToken(",");
-
                     String columnLabel = sv.nextToken(",");
-
                     int timeStamp = Integer.parseInt(sv.nextToken(","));
-
                     String value = sv.nextToken(",");
 
                     byte[] mapData = new byte[116];
@@ -708,12 +697,25 @@ public class bigt implements Filetype, GlobalConst {
 
                     map.setHdr(new short[] { 32,32,32 }); 
 
-                    MID k = insertMap(map.getMapByteArray());
+                    MID k = samplebigt.insertMap(map.getMapByteArray());
                     
                     String key1 = map.getRowLabel();
                     String key2 = map.getColumnLabel();
                     String key = key2 + key1;
                     btf.insert(new StringKey(key), k);
+                    // if (type == 2){
+                    //     key = map.getRowLabel();
+                    //     btf2.insert(new StringKey(key), k);
+                    // }else if (type == 3){
+                    //     key = map.getColumnLabel();
+                    //     btf3.insert(new StringKey(key), k);
+                    // }else if (type == 4){
+                    //     key = map.getColumnLabel() + map.getRowLabel();
+                    //     btf4.insert(new StringKey(key), k);
+                    // }else if (type == 5){
+                    //     key = map.getRowLabel()+map.getRowLabel();
+                    //     btf5.insert(new StringKey(key), k);
+                    // }
                     
                 }
                 count++;
@@ -732,7 +734,7 @@ public class bigt implements Filetype, GlobalConst {
             proj_list[3]= new FldSpec(rel, 4);
             ArrayList<String> keyDone = new ArrayList<>();
             PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator());
-            FileScan fs = new FileScan(dbfile, type, new short[]{32,32,32}, 4, proj_list, null);
+            FileScan fs = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
             boolean done = false;
             while (!done) {
                 Map map = fs.get_next();
@@ -754,7 +756,7 @@ public class bigt implements Filetype, GlobalConst {
                 ex[0].type2 = new AttrType(AttrType.attrString);
                 ex[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
                 ex[0].operand2.string = map.getColumnLabel() + map.getRowLabel();
-                IndexScan iScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), dbfile, "batchinsert_file", attrType, new short[]{32,32,32}, 4, 4, proj_list, null, 2, false, ex);
+                IndexScan iScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), "tempBigt", dbfile+"_insert", attrType, new short[]{32,32,32}, 4, 4, proj_list, null, 2, false, ex);
                 boolean done2 = false;
                 int c2 = 0;
                 while(!done2){
@@ -762,24 +764,107 @@ public class bigt implements Filetype, GlobalConst {
                     if(map2 == null){
                         break;
                     }
-                    map2.getMap().print();
                     c2++;
                     pq.add(map2);
                 }
                 // System.out.println("current queue size "+pq.size());
                 int c3 = 0;
-                
-                while (!pq.isEmpty()){
-                    MapMID mm  = pq.poll();
-                    if(c3 > 2){
-                        System.out.println(mm.getMap().getRowLabel());
-                        deleteMap(mm.getMID());
+                if(pq.size() > 3){
+                    while (!pq.isEmpty()){
+                        MapMID mm  = pq.poll();
+                        if(c3 > 2){
+                            MID mid = mm.getMID();
+                            String row = mm.getMap().getRowLabel();
+                            String column = mm.getMap().getColumnLabel();
+                            String value = mm.getMap().getValue();
+                            // if(type==2){
+                            //     btf2.Delete(new StringKey(row), mid);
+                            // }else if(type==3){
+                            //     btf3.Delete(new StringKey(column), mid);
+                            // }else if(type==4){
+                            //     btf4.Delete(new StringKey(column+row), mid);
+                            // }else if(type==5){
+                            //     btf5.Delete(new StringKey(row+value), mid);
+                            // }
+                            btf.Delete(new StringKey(mm.getMap().getColumnLabel()+mm.getMap().getRowLabel()), mm.getMID());
+                            samplebigt.deleteMap(mm.getMID());
+                        }
+                        c3++;
                     }
-                    c3++;
+                }else {
+                    pq.clear();
                 }
                 
-                // System.out.println("current queue size after deletion"+pq.size());
             }
+            if(type == 1){
+                FileScan fsc = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                boolean done2 = false;
+                while(!done2){
+                    Map m = fsc.get_next();
+                    if(m == null)
+                        break;
+                    MID mid = insertMap(m.getMapByteArray());
+                }
+                fsc.close();
+            }
+            if(type == 2){
+                int order = 7;
+                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                boolean done2 = false;
+                while(!done2){
+                    Map m = s.get_next();
+                    if(m == null)
+                        break;
+                    MID mid = insertMap(m.getMapByteArray());
+                    btf2.insert(new StringKey(m.getRowLabel()), mid);
+                }
+                s.close();
+                fScan.close();
+            }else if(type == 3){
+                int order = 8;
+                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                boolean done2 = false;
+                while(!done2){
+                    Map m = s.get_next();
+                    if(m == null)
+                        break;
+                    MID mid = insertMap(m.getMapByteArray());
+                    btf3.insert(new StringKey(m.getColumnLabel()), mid);
+                }
+                s.close();
+                fScan.close();
+            }else if(type == 4){
+                int order = 2;
+                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                boolean done2 = false;
+                while(!done2){
+                    Map m = s.get_next();
+                    if(m == null)
+                        break;
+                    MID mid = insertMap(m.getMapByteArray());
+                    btf4.insert(new StringKey(m.getColumnLabel() + m.getRowLabel()), mid);
+                }
+                s.close();
+                fScan.close();
+            }else if(type == 5){
+                int order = 6;
+                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                boolean done2 = false;
+                while(!done2){
+                    Map m = s.get_next();
+                    if(m == null)
+                        break;
+                    MID mid = insertMap(m.getMapByteArray());
+                    btf4.insert(new StringKey(m.getRowLabel() + m.getValue()), mid);
+                }
+                s.close();
+                fScan.close();
+            }
+            samplebigt.deleteBigt();
             System.out.println("Map Counts: "+getMapCnt());
             System.out.println("Read counts: "+PCounter.rcounter);
             System.out.println("Write counts: "+PCounter.wcounter);

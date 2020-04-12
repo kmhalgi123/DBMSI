@@ -233,6 +233,52 @@ public class MapUtils
           if (t1_i >  t2_i) return  1;
           return 0;
         }
+      case 6:
+        try {
+          t1_s = m1.getRowLabel();
+          t2_s = m2.getRowLabel();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        else if (t1_s.compareTo( t2_s)<0)return -1;
+        else{
+          try {
+            t1_s = m1.getValue();
+            t2_s = m2.getValue();
+          }catch (Exception e){
+            throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+          }
+          if(t1_s.compareTo( t2_s)>0)return 1;
+          else if (t1_s.compareTo( t2_s)<0)return -1;
+          return 0;
+        }
+      case 7:
+        try {
+          t1_s = m1.getRowLabel();
+          t2_s = m2.getRowLabel();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        else if (t1_s.compareTo( t2_s)<0)return -1;
+        return 0;
+      case 8:
+        try {
+          t1_s = m1.getColumnLabel();
+          t2_s = m2.getColumnLabel();
+        }catch (Exception e){
+          throw new MapUtilsException(e, "FieldNumberOutOfBoundException is caught by TupleUtils.java");
+        }
+        
+        // Now handle the special case that is posed by the max_values for strings...
+        if(t1_s.compareTo( t2_s)>0)return 1;
+        else if (t1_s.compareTo( t2_s)<0)return -1;
+        return 0;
       default:
         throw new UnknowAttrType(null, "Don't know how to handle attrSymbol, attrNull");
     }
