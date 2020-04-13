@@ -122,21 +122,41 @@ public class FileScan extends  Iterator
   public Map get_next()
       throws JoinsException, IOException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException,
       PredEvalException, UnknowAttrType, FieldNumberOutOfBoundException, WrongPermat, MapUtilsException
-    {     
-      MID rid = new MID();;
-      
-      while(true) {
-	      if((tuple1 =  scan.getNext(rid)) == null) {
-	        return null;
-	      }
-	
-        tuple1.mapSetup();
-        if (PredEval.Eval(OutputFilter, tuple1, null) == true){
-          Projection.Project(tuple1, Jtuple, perm_mat, nOutFlds); 
-          return  Jtuple;
-        }        
+  {     
+    MID rid = new MID();
+    
+    while(true) {
+      if((tuple1 =  scan.getNext(rid)) == null) {
+        return null;
       }
+
+      tuple1.mapSetup();
+      if (PredEval.Eval(OutputFilter, tuple1, null) == true){
+        Projection.Project(tuple1, Jtuple, perm_mat, nOutFlds); 
+        return  Jtuple;
+      }        
     }
+  }
+
+  public MapMID get_next_mapMID()
+      throws JoinsException, IOException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException,
+      PredEvalException, UnknowAttrType, FieldNumberOutOfBoundException, WrongPermat, MapUtilsException
+  {     
+    MID rid = new MID();
+    
+    while(true) {
+      if((tuple1 =  scan.getNext(rid)) == null) {
+        return null;
+      }
+      System.out.println(rid.slotNo);
+      tuple1.mapSetup();
+      if (PredEval.Eval(OutputFilter, tuple1, null) == true){
+        Projection.Project(tuple1, Jtuple, perm_mat, nOutFlds); 
+        return  new MapMID(rid, Jtuple);
+      }        
+    }
+  }
+
 
   /**
    *implement the abstract method close() from super class Iterator

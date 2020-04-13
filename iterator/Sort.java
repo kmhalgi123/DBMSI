@@ -800,7 +800,7 @@ public class Sort extends Iterator implements GlobalConst
     c[0] = Character.MIN_VALUE; 
     String s = new String(c);
     //    short fld_no = 1;
-    System.out.println("Sort F: "+order_type);
+    // System.out.println("Sort F: "+order_type);
     switch (order_type) {
       case 5: 
         //      lastElem.setHdr(fld_no, junk, null);
