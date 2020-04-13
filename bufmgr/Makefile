@@ -1,4 +1,4 @@
-JDKPATH = /usr/lib/jvm/java-1.8.0-openjdk-amd64
+JDKPATH = /usr/lib/jvm/jdk1.8.0
 LIBPATH = /home/kaushal/DBMSI/dbmsi02
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
 BINPATH = $(JDKPATH)/bin
