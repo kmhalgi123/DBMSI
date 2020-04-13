@@ -122,8 +122,9 @@ public class NestedLoopsJoins extends Iterator {
 
     if (done)
       return null;
-      MID mid = new MID();  
     do {
+      MID mid = new MID();  
+
       // If get_from_outer is true, Get a tuple from the outer, delete
       // an existing scan on the file, and reopen a new scan on the file.
       // If a get_next on the outer returns DONE?, then the nested loops
@@ -159,7 +160,9 @@ public class NestedLoopsJoins extends Iterator {
       // is no match (with pred),get a tuple from the inner.
 
       MID rid = new MID();
-      while ((inner_tuple = inner.getNext(rid)) != null) {
+      inner_tuple = inner.getNext(rid);
+      while (inner_tuple != null) {
+        System.out.println(inner_tuple.getColumnLabel());
         inner_tuple.setHdr(t2_str_sizescopy);
         if (PredEval.Eval(RightFilter, inner_tuple, null) == true) {
           if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple) == true) {

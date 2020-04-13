@@ -21,7 +21,7 @@
         Boolean done = false;
         Boolean done1 = false;
         Boolean done2 = false;
-        int c = 0;
+        int c = 0; 
         MapMID mm = new MapMID();
         MapMID mm2 = new MapMID();
 
