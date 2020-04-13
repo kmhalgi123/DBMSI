@@ -722,7 +722,7 @@ public class bigt implements Filetype, GlobalConst {
                     
                 }
                 count++;
-                System.out.println(count);
+                // System.out.println(count);
             }
             AttrType[] attrType = new AttrType[4];
             attrType[0] = new AttrType(AttrType.attrString);

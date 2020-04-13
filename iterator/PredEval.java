@@ -30,7 +30,7 @@ public class PredEval
 	   FieldNumberOutOfBoundException,
 	   PredEvalException
     {
-		AttrType in1[] = {new AttrType(AttrType.attrString),
+ 		AttrType in1[] = {new AttrType(AttrType.attrString),
 			new AttrType(AttrType.attrString),
 			new AttrType(AttrType.attrInteger),
 			new AttrType(AttrType.attrString)};
