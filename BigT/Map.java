@@ -17,6 +17,10 @@ public class Map implements GlobalConst{
     public static final int max_size = MINIBASE_PAGESIZE;
     public static int size = 4;
     private int map_offset;
+    private String rowLabel;
+    private String colLabel;
+    private String value;
+    private int timestamp;
     public int map_length = 116;
     
     /** 
@@ -37,24 +41,38 @@ public class Map implements GlobalConst{
         map_offset = 0;
     }
 
-    /** Constructor
-    * @param amap a byte array which contains the map
-    * @param offset the offset of the map in the byte array
-    * @param length the length of the map
-    */
-    public Map(byte[] amap, int offset){
+    /**
+     * Constructor
+     * 
+     * @param amap   a byte array which contains the map
+     * @param offset the offset of the map in the byte array
+     * @param length the length of the map
+     * @throws IOException
+     */
+    public Map(byte[] amap, int offset) throws IOException {
         data = amap;
         map_offset = offset;
+        // rowLabel = ConvertMap.getStrLabel(10, data, 32);
+        // colLabel = ConvertMap.getStrLabel(44, data, 32);
+        // timestamp = ConvertMap.getIntValue(78, data);
+        // value = ConvertMap.getStrLabel(82, data, 32);
     }
 
-    /** Constructor(used as map copy)
-    * @param frommap   a byte array which contains the map
-    * 
-    */
+    /**
+     * Constructor(used as map copy)
+     * 
+     * @param frommap a byte array which contains the map
+     * @throws IOException
+     * 
+     */
 
-    public Map(Map fromMap){
+    public Map(Map fromMap) throws IOException {
         data = fromMap.getMapByteArray();
         map_offset = 0;
+        rowLabel = ConvertMap.getStrLabel(10, data, 32);
+        colLabel = ConvertMap.getStrLabel(44, data, 32);
+        timestamp = ConvertMap.getIntValue(78, data);
+        value = ConvertMap.getStrLabel(82, data, 32);
     }
     
     /**  
