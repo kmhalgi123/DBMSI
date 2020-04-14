@@ -24,6 +24,8 @@ public class BatchInsert {
     static bigt f = null;
     static bigt f1 = null;
     static bigt f2 = null;
+    static bigt sorted_f1 = null;
+    static bigt sorted_f2 = null;
     static bigt outbt = null;
     static String outbtname;
     String dbFileName = "project2_testdata.csv";
@@ -340,13 +342,36 @@ public class BatchInsert {
                     String numbuf = words[5];
                     int amt_of_mem = Integer.parseInt(numbuf);
                     f1 = new bigt(btname1);
+                    f1.batchInsert("simple1.csv", 1, btname1);
 
-                    f1.batchInsert("join1.csv", 1, "bigdata");
+                    // this will sort the given bigt and put those values into sorted_f1
+                    rowSort(btname1, btname1+"sorted", columnName, amt_of_mem);
+                    sorted_f1 = new bigt(btname1+"sorted");
 
-                    Stream leftStream = f1.openStream();
+                    System.out.println("sorted left ");
+                    boolean done = false;
+                    Stream stream = sorted_f1.openStream();
+
+                    System.out.println("sorted values");
+                    MID mid = new MID();  
+                    while (!done) {
+                        Map m = stream.getNext(mid);
+                        if (m == null) {
+                            done = true;
+                        } else {
+                            m.mapSetup();
+                            m.print();
+                        }
+                    }
+
+                    Stream leftStream = sorted_f1.openStream();
+
+
+
                     RowJoin(amt_of_mem, leftStream, btname2, columnName);
 
-                } else {
+                }  
+                else {
                     System.out.println("Invalid input!");
                 }
             } while (!quit);
@@ -358,9 +383,37 @@ public class BatchInsert {
 
     }
 
+    public static void rowSort(String inbtname, String outbtname, String colname, int numbf)
+            throws UnknowAttrType, LowMemException, JoinsException, Exception {
+        short[] s_sizes = { 32, 32, 32 };
+        bigt outBigt = new bigt(outbtname);
+        AttrType[] attrType = new AttrType[4];
+        attrType[0] = new AttrType(AttrType.attrString);
+        attrType[1] = new AttrType(AttrType.attrString);
+        attrType[2] = new AttrType(AttrType.attrInteger);
+        attrType[3] = new AttrType(AttrType.attrString);
+        FldSpec[] proj_list = new FldSpec[4];
+        RelSpec rel = new RelSpec(RelSpec.outer);
+        proj_list[0] = new FldSpec(rel, 1);
+        proj_list[1] = new FldSpec(rel, 2);
+        proj_list[2] = new FldSpec(rel, 3);
+        proj_list[3] = new FldSpec(rel, 4);
+        FileScan fs = new FileScan(inbtname, 1, s_sizes, 4, proj_list, null);
+        Sort s = new Sort(fs, 1, new MapOrder(MapOrder.Ascending), 32, numbf, 1, colname, inbtname);
+        while (true) {
+            Map m = s.get_next();
+            if (m == null)
+                break;
+            outBigt.insertMap(m.getMapByteArray());
+            m.print();
+        }
+        s.close();
+    }
+
+
     // Row join function
     // rowjoin join1 join2 outjoin column1 100
-    
+    // rowjoin join1 join2 outjoin C1 100
     public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName) throws Exception {
         
         // opening the right bigt and outbt
@@ -368,26 +421,38 @@ public class BatchInsert {
         outbt = new bigt(outbtname);
         
         //insert data into rightbt and open the stream
-        f2.batchInsert("join2.csv", 1, "bigdata");
-        Stream rightStream;
+        //f2.batchInsert("join2.csv", 1, "bigdata");
+        f2.batchInsert("simple2.csv", 1, rightBigtName);
+
+        rowSort(rightBigtName, rightBigtName+"sorted", columnName, amt_of_mem);
+        sorted_f2 = new bigt(rightBigtName+"sorted");
+        Stream rightStream = sorted_f2.openStream();
+
+        
         // start priority queue on both left and right bigt because we need to compare the latest values from each row in left and right streams
-        PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
-        PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
+        // PriorityQueue<MapMID> pq = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
+        // PriorityQueue<MapMID> pq2 = new PriorityQueue<MapMID>(5, new MapComparator().reversed());
         MID mid = new MID();  
-        MID mid1 = new MID();
-        MID mid2 = new MID();
+        // MID mid1 = new MID();
+        // MID mid2 = new MID();
         Boolean done = false;
-        Boolean done1 = false;
-        Boolean done2 = false;
+        // Boolean done1 = false;
+        // Boolean done2 = false;
         int c = 0;
-        MapMID mm = new MapMID();
-        MapMID mm2 = new MapMID();
+        // MapMID combined_mm = new MapMID();
+        // MapMID mm2 = new MapMID();
 
         Boolean leftdone = false;
         MID leftmid = new MID();
         Boolean rightdone = false;
         MID rightmid;
-        int counter = 0;
+        // int counter = 0;
+        int outcounter = 0;
+        Map combined_map;
+        short sizes[] = new short[3];
+        int c3 = 0;
+        
+        // half working
         outer: while (!leftdone) {
             //System.out.println("into outer");
             Map leftmap = leftStream.getNext(leftmid);
@@ -396,255 +461,119 @@ public class BatchInsert {
                 //System.out.println("breaking outer");
                 break outer;
             }
-            int outcounter = 0;
+            outcounter = 0;
             rightdone = false;
             rightmid = new MID();
-            rightStream = f2.openStream();
-
-            
+            rightStream = sorted_f2.openStream();
             inner: while(!rightdone){
- 
+                
                 Map rightmap = rightStream.getNext(rightmid);
+                
                 if(rightmap == null){
-                    //System.out.println("hello");
                     rightdone = true;
                     break inner;
                 }
-
-                 // add left map
-                        Map combined_map = new Map(); 
-                        String a;
-                        short sizes[] = new short[3]; //[s1,s2,s3,s4];
-                        // if(leftmap.getRowLabel().charAt(0) == ' ') {
-                        //     a  = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                        // }
-                        // else 
-                        //     a  = leftmap.getRowLabel()+":"+rightmap.getRowLabel();
-                        a  = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                        String b = leftmap.getColumnLabel();
-                        int e = leftmap.getTimeStamp();
-                        String d = leftmap.getValue();
-                        
-                        sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
-                        sizes[1] = (short) (leftmap.getColumnLabel().length());
-                        sizes[2] = (short) (leftmap.getValue().length());
-                        
-                        combined_map.setHdr(sizes);
-                        
-                        combined_map.setRowLabel(a);
-                        combined_map.setColumnLabel(b);
-                        combined_map.setTimeStamp(e);
-                        combined_map.setValue(d);
-                        combined_map.mapSetup();
-                        
-
-                        combined_map.print();
-
-                        outbt.insertMap(combined_map.getMapByteArray());
-                
+                     
                 if (leftmap.getColumnLabel().equalsIgnoreCase(rightmap.getColumnLabel())){
                     if (leftmap.getColumnLabel().equalsIgnoreCase(columnName)){
 
                         // get the most recent value 
-
+                        
                         combined_map = new Map(); 
-                        
-                          
-                        outcounter++;
-                        if(outcounter==1){
                         // add left map
-                     //[s1,s2,s3,s4];
-                        // if(leftmap.getRowLabel().charAt(0) == ' ') {
-                        //     a  = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                        // }
-                        // else 
-                        //     a  = leftmap.getRowLabel()+":"+rightmap.getRowLabel();
-                        a  = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                        b = leftmap.getColumnLabel();
-                        e = leftmap.getTimeStamp();
-                        d = leftmap.getValue();
-                        
+                       
                         sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
-                        sizes[1] = (short) (leftmap.getColumnLabel().length());
+                        sizes[1] = (short) (leftmap.getColumnLabel().length()); 
                         sizes[2] = (short) (leftmap.getValue().length());
                         
-                        combined_map.setHdr(sizes);
+                        //combined_map.setHdr(sizes);
+                        combined_map.setHdr(new short[] { 32, 32, 32 });
                         
-                        combined_map.setRowLabel(a);
-                        combined_map.setColumnLabel(b);
-                        combined_map.setTimeStamp(e);
-                        combined_map.setValue(d);
+                        combined_map.setRowLabel(leftmap.getRowLabel()+":"+rightmap.getRowLabel());
+                        combined_map.setColumnLabel(leftmap.getColumnLabel());
+                        combined_map.setTimeStamp(leftmap.getTimeStamp());
+                        combined_map.setValue(leftmap.getValue());
                         combined_map.mapSetup();
                         
-
                         combined_map.print();
-
-                        outbt.insertMap(combined_map.getMapByteArray());
-                        }
+                        outbt.mapInsert(combined_map.getMapByteArray());
+                        //outbt.insertMap(combined_map.getMapByteArray());
+                       
+                        combined_map = new Map();  
                         // add right map
-                        combined_map = new Map(); 
-                        
-                        a = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                        b = rightmap.getColumnLabel();
-                        e = rightmap.getTimeStamp();
-                        d = rightmap.getValue();
-                        
+                       
                         sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
                         sizes[1] = (short) (rightmap.getColumnLabel().length());
                         sizes[2] = (short) (rightmap.getValue().length());
                         
-                        combined_map.setHdr(sizes);
+                        //combined_map.setHdr(sizes);
+                        combined_map.setHdr(new short[] { 32, 32, 32 });
                         
-                        combined_map.setRowLabel(a);
-                        combined_map.setColumnLabel(b);
-                        combined_map.setTimeStamp(e);
-                        combined_map.setValue(d);
+                        combined_map.setRowLabel(leftmap.getRowLabel()+":"+rightmap.getRowLabel());
+                        combined_map.setColumnLabel(rightmap.getColumnLabel());
+                        combined_map.setTimeStamp(rightmap.getTimeStamp());
+                        combined_map.setValue(rightmap.getValue());
                         combined_map.mapSetup();
                         
-
                         combined_map.print();
                         
-                        // inserting everything
-                        int count_r = 0;
-                        if(count_r > 3){
-                        outbt.insertMap(combined_map.getMapByteArray());
-                        //remove the highest value
-                        }
-                        else{
-                            outbt.insertMap(combined_map.getMapByteArray());
-                        }
+                        //MID combined_mid = outbt.insertMap(combined_map.getMapByteArray());
+                        outbt.mapInsert(combined_map.getMapByteArray());
+                         
+                }
+            
 
-                        // only have top 3 values
-                            // top 3 condition yet to be added
-                    }
                     else{  //if onlt left and right map columns are equal, but not equal to given column name
-                            // add left map
-                            combined_map = new Map(); 
-
-                             
-                            a  = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                            b = leftmap.getColumnLabel();
-                            e = leftmap.getTimeStamp();
-                            d = leftmap.getValue();
-                            
-                            sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
-                            sizes[1] = (short) (leftmap.getColumnLabel().length());
-                            sizes[2] = (short) (leftmap.getValue().length());
-                            
-                            combined_map.setHdr(sizes);
-                            
-                            combined_map.setRowLabel(a);
-                            combined_map.setColumnLabel(b);
-                            combined_map.setTimeStamp(e);
-                            combined_map.setValue(d);
-                            combined_map.mapSetup();
-                            
-    
-                            combined_map.print();
-    
-                            outbt.insertMap(combined_map.getMapByteArray());
-                            
-                            // add right map
-                            combined_map = new Map(); 
-       
-                            a = leftmap.getRowLabel().substring(1)+":"+rightmap.getRowLabel().substring(1);
-                            b = rightmap.getColumnLabel();
-                            e = rightmap.getTimeStamp();
-                            d = rightmap.getValue();
-                            
-                            sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
-                            sizes[1] = (short) (rightmap.getColumnLabel().length());
-                            sizes[2] = (short) (rightmap.getValue().length());
-                            
-                            combined_map.setHdr(sizes);
-                            
-                            combined_map.setRowLabel(a);
-                            combined_map.setColumnLabel(b);
-                            combined_map.setTimeStamp(e);
-                            combined_map.setValue(d);
-                            combined_map.mapSetup();
-                            
-    
-                            combined_map.print();
-    
-                            outbt.insertMap(combined_map.getMapByteArray());
+                        
+                        // get the most recent value 
+                       
+                        combined_map = new Map(); 
+                        // add left map
+                       
+                        sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
+                        sizes[1] = (short) (leftmap.getColumnLabel().length()); 
+                        sizes[2] = (short) (leftmap.getValue().length());
+                        
+                        
+                        //combined_map.setHdr(sizes);
+                        combined_map.setHdr(new short[] { 32, 32, 32 });
+                        
+                        combined_map.setRowLabel(leftmap.getRowLabel()+":"+rightmap.getRowLabel());
+                        combined_map.setColumnLabel("left_"+leftmap.getColumnLabel());
+                        combined_map.setTimeStamp(leftmap.getTimeStamp());
+                        combined_map.setValue(leftmap.getValue());
+                        combined_map.mapSetup();
+                        
+                        combined_map.print();
+                        outbt.mapInsert(combined_map.getMapByteArray());
+                        //outbt.insertMap(combined_map.getMapByteArray());
+                        
+                        combined_map = new Map(); 
+                        // add right map
+                       
+                        sizes[0] = (short) (leftmap.getRowLabel().length()+1+rightmap.getRowLabel().length());
+                        sizes[1] = (short) (rightmap.getColumnLabel().length()); 
+                        sizes[2] = (short) (rightmap.getValue().length());
+                        
+                        //combined_map.setHdr(sizes);
+                        combined_map.setHdr(new short[] { 32, 32, 32 });
+                        
+                        combined_map.setRowLabel(leftmap.getRowLabel()+":"+rightmap.getRowLabel());
+                        combined_map.setColumnLabel("right_"+rightmap.getColumnLabel());
+                        combined_map.setTimeStamp(rightmap.getTimeStamp());
+                        combined_map.setValue(rightmap.getValue());
+                        combined_map.mapSetup();
+                        
+                        combined_map.print();
+                        
+                        //outbt.insertMap(combined_map.getMapByteArray());  
+                        outbt.mapInsert(combined_map.getMapByteArray());        
                         
                     }
                 }
             }
 
         }
-
-
-
-    //     // iterate through every map in left stream
-    //     while (!done) {
-    //         Map m = leftStream.getNext(mid1);
-
-    //         //MID m2 =  mm.getMID();
-    //         if (m == null) {
-    //             done = true;
-    //         } else {
-    //             // if the column name of map from left stream matches given column name, then consider only top 3 values
-    //             // so while adding we poll the highes value and look at the count, if count is > 3, just remove the highest value
-    //             if (m.getColumnLabel().equalsIgnoreCase(columnName)){
-    //                 m.mapSetup();
-    //                 mm.setMID(mid1);
-    //                 mm.setMap(m);
-    //             m.print();
-                
-    //             //outbt.insertMap(m.getMapByteArray());
-    //             pq.add(mm);
-    //             c++;
-    //             }
-    //         }
-    //     }
-        
-    //     System.out.println("break here");
-    //     done = false;
-    //     while (!done) {
-    //         Map m = rightStream.getNext(mid2);
-    //         if (m == null) {
-    //             done = true;
-    //         } else {
-    //             if (m.getColumnLabel().equalsIgnoreCase(columnName)){
-
-    //             m.mapSetup();
-    //             mm2.setMID(mid2);
-    //             mm2.setMap(m);
-    //             m.print();
-    //             //outbt.insertMap(m.getMapByteArray());
-    //             pq2.add(mm2);
-    //             c++;
-    //             }
-    //         }
-    //     }
-    //     // using nested while loop for R1:R2 format
-    //     System.out.println("polling highest value");
-    //     // get highest timestamp for each row, check if they are equal
-    //     mm = pq.poll();
-    //     mm.getMap().print();
-
-    //     System.out.println("polling highest value for join2");
-    //     // get highest timestamp for each row, check if they are equal
-    //     mm2  = pq2.poll();
-    //     mm2.getMap().print();
-    //     Map combined = null;
-    //    if(mm.getMap().getValue().equals(mm2.getMap().getValue()))
-    //    {
-    //        combined = new Map();
-    //        combined.setRowLabel(mm.getMap().getRowLabel()+mm2.getMap().getRowLabel());
-    //        combined.setColumnLabel(mm.getMap().getColumnLabel());
-    //        if(mm.getMap().getTimeStamp() > mm2.getMap().getTimeStamp())           
-    //             combined.setTimeStamp(mm.getMap().getTimeStamp());
-    //         else 
-    //             combined.setTimeStamp(mm2.getMap().getTimeStamp());
-    //        combined.setValue(mm.getMap().getValue());
-    //        outbt.insertMap(combined.getMapByteArray());
-           
-    //    }
-  
-
        System.out.println("combined output");
        done = false;
        Stream stream = outbt.openStream();
@@ -653,7 +582,7 @@ public class BatchInsert {
            if (m == null) {
                done = true;
            } else {
-               if (m.getColumnLabel().equalsIgnoreCase(columnName)){
+               //if (m.getColumnLabel().equalsIgnoreCase(columnName)){
                m.mapSetup();
                //mm2.setMID(mid);
                //jmm2.setMap(m);
@@ -661,63 +590,19 @@ public class BatchInsert {
                //outbt.insertMap(m.getMapByteArray());
                //pq2.add(mm2);
                c++;
-               }
+              // }
            }
        }
-
-   //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
-        //pq.poll().getMap().print();
-        // if they are equal, get the top 3 values.
-
-        // not printing outbt rightnow
-        // done = false;
-        // System.out.println("printing the joined map");
-        // Stream outstream = outbt.openStream();
-        // while (!done) {
-            
-        //     Map m = outstream.getNext(mid);
-        //     if (m == null) {
-        //         done = true;
-        //     } else {
-        //         m.mapSetup();
-        //         m.print();
-        //         c++;
-                
-        //     }
-
-            // use inner while loop
-
-            
-        // }
-     
-        
-     
-
         // iterate through f1 and add them to outbt
     // remove the maps where recent values of column dont match
     // remove the column which is repeated twice (the common column)
-
+    
     return true;
-
-    }
+        }
     
 
-    // public static boolean batchInsert(String dbFileName, int type, String
-    // filepath) throws IndexException, InvalidTypeException,
-    // InvalidTupleSizeException, UnknownIndexTypeException,
-    // InvalidSelectionException, IOException, UnknownKeyTypeException,
-    // GetFileEntryException,
-    // ConstructPageException, AddFileEntryException, IteratorException,
-    // HashEntryNotFoundException,
-    // InvalidFrameNumberException, PageUnpinnedException, ReplacerException,
-    // HFDiskMgrException,
-    // HFBufMgrException, HFException {
-    // f = new bigt(dbFileName+"_"+String.valueOf(type));
-    // f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
-    // return true;
-    // }
+
+
 
     public static boolean query(String filename, int type, int order, CondExpr[] select)
             throws LowMemException, Exception {
