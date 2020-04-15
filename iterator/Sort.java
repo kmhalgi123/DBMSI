@@ -55,7 +55,7 @@ public class Sort extends Iterator implements GlobalConst
   private ArrayList<pnode> arrayList;
   private int          current_row_max_int = 0;
   private PriorityQueue Qs;
-  private boolean useBM = true; // flag for whether to use buffer manager
+  private boolean useBM = false; // flag for whether to use buffer manager
   
   /**
    * Set up for merging the runs.
@@ -462,7 +462,7 @@ public class Sort extends Iterator implements GlobalConst
 	      throw new SortException(e, "MIN_VAL failed");
       } 
     }
-    System.out.println(max_elems);
+    // System.out.println(max_elems);
     // maintain a fixed maximum number of elements in the heap
     while ((p_elems_curr_Q + p_elems_other_Q) < max_elems) {
       try {
@@ -526,7 +526,7 @@ public class Sort extends Iterator implements GlobalConst
       Map map = cur_node.map;
       map.mapSetup();
       ArrayList<pnode> arrayList2 = hashtable.get(map.getRowLabel());
-      System.out.println(arrayList2.size());
+      // System.out.println(arrayList2.size());
       p_elems_curr_Q -= arrayList2.size();
       // while(!arrayList2.isEmpty())
 

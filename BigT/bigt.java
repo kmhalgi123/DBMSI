@@ -105,7 +105,7 @@ public class bigt implements Filetype, GlobalConst {
     {
         BTreeFile btf = null;
         if(type != 1){
-            btf = new BTreeFile(filename+"_"+String.valueOf(type));
+            btf = new BTreeFile("btree"+filename+"_"+String.valueOf(type),0,100,0);
         }
         int dpinfoLen = 0;
         int recLen = recPtr.length;
@@ -378,7 +378,7 @@ public class bigt implements Filetype, GlobalConst {
             String key = givenRow+givenVal;
             btf.insert(new StringKey(key), rid);
         }
-        
+        btf.close();
         dpinfo.recct++;
         dpinfo.availspace = currentDataPage.available_space();
         unpinPage(dpinfo.pageId, true /* = DIRTY */);
@@ -652,8 +652,9 @@ public class bigt implements Filetype, GlobalConst {
         return hfpage;
     }
 
-    public boolean batchInsert(String filepath, int type, String dbfile){
+    public boolean batchInsert(String filepath, int type, String dbfile, int numbf){
         String UTF_BOM = "\uFEFF";
+        ArrayList<MID> toDelete = new ArrayList<>();
         try{
             FileInputStream fin;
             fin = new FileInputStream(filepath);
@@ -665,19 +666,17 @@ public class bigt implements Filetype, GlobalConst {
             proj_list[1]= new FldSpec(rel, 2);
             proj_list[2]= new FldSpec(rel, 3);
             proj_list[3]= new FldSpec(rel, 4);
-            BTreeFile btf = new BTreeFile(dbfile+"_insert");
-            BTreeFile btf2 = new BTreeFile(dbfile+"_2");
-            BTreeFile btf3 = new BTreeFile(dbfile+"_3");
-            BTreeFile btf4 = new BTreeFile(dbfile+"_4");
-            BTreeFile btf5 = new BTreeFile(dbfile+"_5");
+            BTreeFile btf = new BTreeFile(dbfile+"_insert", 0, 100, 0);
+            BTreeFile btf2 = new BTreeFile(dbfile+"_insert_2", 0, 100, 0);
             bigt samplebigt = new bigt("tempBigt");
-
+            BTreeFile btf_actual = new BTreeFile("btree"+dbfile+"_"+String.valueOf(type), 0, 64, 0);
             FileScan fs1 = new FileScan(dbfile, type, new short[]{32,32,32}, 4, proj_list, null);
             while (true) {
                 MapMID m = fs1.get_next_mapMID();
                 if(m == null){break;}
                 btf.insert(new StringKey(m.getMap().getColumnLabel()+m.getMap().getRowLabel()), m.getMID());
             }
+            fs1.close();
 
             String line;
 
@@ -709,7 +708,27 @@ public class bigt implements Filetype, GlobalConst {
                     Map map = new Map(mapData, 0);
 
                     map.setHdr(new short[] { 32,32,32 }); 
-                    samplebigt.insertMap(map.getMapByteArray());
+                    MID rid = samplebigt.insertMap(map.getMapByteArray());
+                    String key;
+                    switch (type) {
+                        case 2:
+                            key = rowLabel;
+                            btf2.insert(new StringKey(key), rid);
+                            break;
+                        case 3:
+                            key = columnLabel;
+                            btf2.insert(new StringKey(key), rid);
+                            break;
+                        case 4:
+                            key = columnLabel+rowLabel;
+                            btf2.insert(new StringKey(key), rid);
+                            break;
+                        case 5:
+                            key = rowLabel+value;
+                            btf2.insert(new StringKey(key), rid);
+                        default:
+                            break;
+                    }
                 }
                 count++;
                 System.out.println("Inserted "+count+"th record.");
@@ -719,6 +738,7 @@ public class bigt implements Filetype, GlobalConst {
             attrType[1] = new AttrType(AttrType.attrString);
             attrType[2] = new AttrType(AttrType.attrInteger);
             attrType[3] = new AttrType(AttrType.attrString);
+            
             System.out.println("Storing records according to type " + type + " storage fashion.");
             if(type == 1){
                 FileScan fsc = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
@@ -737,29 +757,33 @@ public class bigt implements Filetype, GlobalConst {
             }
             if(type == 2){
                 int order = 7;
-                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
-                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                // FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                // Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, numbf, order);
+                IndexScan indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), "tempBigt", dbfile+"_insert_2", new short[]{32,32,32}, 4, 4, proj_list, null, 1, false, null);
                 boolean done2 = false;
                 while(!done2){
-                    Map m = s.get_next();
+                    Map m = indexScan.get_next();
                     if(m == null)
                         break;
+                    m.print();
                     MID mid = insertMap(m.getMapByteArray());
                     String key1 = m.getRowLabel();
                     String key2 = m.getColumnLabel();
                     String key = key2 + key1;
                     btf.insert(new StringKey(key), mid);
-                    btf2.insert(new StringKey(m.getRowLabel()), mid);
+                    btf_actual.insert(new StringKey(m.getRowLabel()), mid);
                 }
-                s.close();
-                fScan.close();
+                indexScan.close();
+                // s.close();
+                // fScan.close();
             }else if(type == 3){
                 int order = 8;
-                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
-                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                // FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                // Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, numbf, order);
+                IndexScan indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), "tempBigt", dbfile+"_insert_2", new short[]{32,32,32}, 4, 4, proj_list, null, 1, false, null);
                 boolean done2 = false;
                 while(!done2){
-                    Map m = s.get_next();
+                    Map m = indexScan.get_next();
                     if(m == null)
                         break;
                     MID mid = insertMap(m.getMapByteArray());
@@ -767,17 +791,19 @@ public class bigt implements Filetype, GlobalConst {
                     String key2 = m.getColumnLabel();
                     String key = key2 + key1;
                     btf.insert(new StringKey(key), mid);
-                    btf3.insert(new StringKey(m.getColumnLabel()), mid);
+                    btf_actual.insert(new StringKey(m.getColumnLabel()), mid);
                 }
-                s.close();
-                fScan.close();
+                indexScan.close();
+                // s.close();
+                // fScan.close();
             }else if(type == 4){
                 int order = 2;
-                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
-                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                // FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                // Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, numbf, order);
+                IndexScan indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), "tempBigt", dbfile+"_insert_2", new short[]{32,32,32}, 4, 4, proj_list, null, 1, false, null);
                 boolean done2 = false;
                 while(!done2){
-                    Map m = s.get_next();
+                    Map m = indexScan.get_next();
                     if(m == null)
                         break;
                     MID mid = insertMap(m.getMapByteArray());
@@ -785,17 +811,19 @@ public class bigt implements Filetype, GlobalConst {
                     String key2 = m.getColumnLabel();
                     String key = key2 + key1;
                     btf.insert(new StringKey(key), mid);
-                    btf4.insert(new StringKey(m.getColumnLabel() + m.getRowLabel()), mid);
+                    btf_actual.insert(new StringKey(m.getColumnLabel() + m.getRowLabel()), mid);
                 }
-                s.close();
-                fScan.close();
+                indexScan.close();
+                // s.close();
+                // fScan.close();
             }else if(type == 5){
                 int order = 6;
-                FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
-                Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
+                // FileScan fScan = new FileScan("tempBigt", type, new short[]{32,32,32}, 4, proj_list, null);
+                // Sort s = new Sort(new short[]{32,32,32}, fScan, order, new MapOrder(MapOrder.Ascending), 32, numbf, order);
+                IndexScan indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Value_Index), "tempBigt", dbfile+"_insert_2", new short[]{32,32,32}, 4, 4, proj_list, null, 1, false, null);
                 boolean done2 = false;
                 while(!done2){
-                    Map m = s.get_next();
+                    Map m = indexScan.get_next();
                     if(m == null)
                         break;
                     MID mid = insertMap(m.getMapByteArray());
@@ -803,11 +831,13 @@ public class bigt implements Filetype, GlobalConst {
                     String key2 = m.getColumnLabel();
                     String key = key2 + key1;
                     btf.insert(new StringKey(key), mid);
-                    btf5.insert(new StringKey(m.getRowLabel() + m.getValue()), mid);
+                    btf_actual.insert(new StringKey(m.getRowLabel() + m.getValue()), mid);
                 }
-                s.close();
-                fScan.close();
+                indexScan.close();
+                // s.close();
+                // fScan.close();
             }
+            btf2.destroyFile();
             System.out.println("Sample insertion finished. Checking for duplicate entries");
             ArrayList<String> keyDone = new ArrayList<>();
             int c2 = 0;
@@ -833,7 +863,7 @@ public class bigt implements Filetype, GlobalConst {
                 ex[0].type2 = new AttrType(AttrType.attrString);
                 ex[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
                 ex[0].operand2.string = map.getColumnLabel() + map.getRowLabel();
-                IndexScan iScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), dbfile, dbfile+"_insert", attrType, new short[]{32,32,32}, 4, 4, proj_list, null, 2, false, ex);
+                IndexScan iScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), dbfile, dbfile+"_insert", new short[]{32,32,32}, 4, 4, proj_list, null, 2, false, ex);
                 boolean done2 = false;
                 
                 while(!done2){
@@ -849,7 +879,7 @@ public class bigt implements Filetype, GlobalConst {
                         MapMID mm  = pq.poll();
                         if(c3 > 2){
                             btf.Delete(new StringKey(mm.getMap().getColumnLabel()+mm.getMap().getRowLabel()), mm.getMID());
-                            deleteMap(mm.getMID());
+                            toDelete.add(mm.getMID());
                         }
                         c3++;
                     }
@@ -857,13 +887,17 @@ public class bigt implements Filetype, GlobalConst {
                     pq.clear();
                 }
                 c2++;
-                System.out.println("Checked the version for "+c2+"th entry");
+                System.out.println("Checked the versions for "+c2+"th entry");
+            }
+            System.out.println("Deleting duplicate records");
+            for (MID mid : toDelete) {
+                deleteMap(mid);
             }
             System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt() +"\nTotal Distinct Column Count: "+getColumnCnt());
-            System.out.println("Read counts: "+PCounter.rcounter);
-            System.out.println("Write counts: "+PCounter.wcounter);
+            
             btf.destroyFile();
             samplebigt.deleteBigt();
+            btf_actual.close();
             bin.close();
 
         } catch (Exception e) {
@@ -983,7 +1017,6 @@ public class bigt implements Filetype, GlobalConst {
       
     } // end of _findDatapage		     
       
-
     public void deleteBigt() throws InvalidSlotNumberException, IOException, FileAlreadyDeletedException,
             HFBufMgrException, HFDiskMgrException {
         if(_file_deleted ) 
@@ -1085,8 +1118,8 @@ public class bigt implements Filetype, GlobalConst {
         BigPage cuDataPage = new BigPage();
         ArrayList<String> rows = new ArrayList<>();
         PageId nextDirPageId = new PageId();
-        String row,column;
-        thisloop: while(cuDirPageId.pid != INVALID_PAGE)
+        String row;
+        while(cuDirPageId.pid != INVALID_PAGE)
         {
             pinPage(cuDirPageId, cuDirPage, false);
         
@@ -1106,7 +1139,6 @@ public class bigt implements Filetype, GlobalConst {
                     // System.out.println("here"); 
                     m.mapSetup();
                     row = m.getRowLabel();
-                    column = m.getColumnLabel();
                     if (!rows.contains(row)) {
                         rows.add(row);
                     }
@@ -1384,12 +1416,6 @@ public class bigt implements Filetype, GlobalConst {
         Stream newsStream = new Stream(this);
         return newsStream;
     }
-
-    // public Stream openStream(int order, String rowFilter, String columnFilter, String valueFilter) throws InvalidTupleSizeException, IOException,
-    //         HFBufMgrException {
-    //     Stream newsStream = new Stream(this, order, rowFilter, columnFilter, valueFilter);
-    //     return newsStream;
-    // }
 
     private void pinPage(PageId pageno, Page page, boolean emptyPage)throws HFBufMgrException {
         

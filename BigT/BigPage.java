@@ -550,11 +550,12 @@ public class BigPage extends Page implements ConstSlot {
         PageId pageNo = new PageId();
         pageNo.pid= mid.pageNo.pid;
         curPage.pid = ConvertMap.getIntValue (CUR_PAGE, data);
+        
         int slotNo = mid.slotNo;
         
         // length of record being returned
         mapLen = getSlotLength (slotNo);
-        // System.out.println(mapLen);
+        
         slotCnt = ConvertMap.getShortValue (SLOT_CNT, data);
         if (( slotNo >=0) && (slotNo < slotCnt) && (mapLen >0) && (pageNo.pid == curPage.pid)) {
             offset = getSlotOffset (slotNo);
@@ -565,6 +566,8 @@ public class BigPage extends Page implements ConstSlot {
         }
       
       else {
+        // System.out.println(Arrays.toString(data));
+        // System.out.println(mapLen+ " " + slotNo + " "+pageNo.pid+" "+ curPage.pid);
         throw new InvalidSlotNumberException (null, "HEAPFILE: INVALID_SLOTNO");
       }
      

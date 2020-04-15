@@ -110,7 +110,6 @@ public class Stream implements GlobalConst{
         
         rid.pageNo.pid = userrid.pageNo.pid;    
         rid.slotNo = userrid.slotNo;
-            
         try {
             recptrmap = datapage.getMap(rid);
         } catch (Exception e) {

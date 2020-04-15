@@ -148,7 +148,6 @@ public class FileScan extends  Iterator
       if((tuple1 =  scan.getNext(rid)) == null) {
         return null;
       }
-      System.out.println(rid.slotNo);
       tuple1.mapSetup();
       if (PredEval.Eval(OutputFilter, tuple1, null) == true){
         Projection.Project(tuple1, Jtuple, perm_mat, nOutFlds); 
