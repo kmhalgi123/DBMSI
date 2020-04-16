@@ -401,11 +401,12 @@ public class BatchInsert {
         String inbtname = words[1];
         String outbtname = words[2];
         String colname = words[3];
-        int numbf = Integer.parseInt(words[4]);
-        rowSort(inbtname, outbtname, colname, numbf);
+        int order = Integer.parseInt(words[4]);
+        int numbf = Integer.parseInt(words[5]);
+        rowSort(inbtname, outbtname, colname, order, numbf);
     }
 
-    public static void rowSort(String inbtname, String outbtname, String colname, int numbf)
+    public static void rowSort(String inbtname, String outbtname, String colname, int order, int numbf)
     throws UnknowAttrType, LowMemException, JoinsException, Exception {
         updateNumbuf(numbf);
         short[] s_sizes = {32,32,32};
@@ -422,7 +423,7 @@ public class BatchInsert {
         proj_list[2]= new FldSpec(rel, 3);
         proj_list[3]= new FldSpec(rel, 4);
         FileScan fs = new FileScan(inbtname, 1, s_sizes, 4, proj_list, null);
-        Sort s = new Sort(fs, 1, new MapOrder(MapOrder.Ascending), 32, numbf, 1, colname, inbtname);
+        Sort s = new Sort(fs, 1, new MapOrder(order), 32, numbf, 1, colname, inbtname);
         while(true){
             Map m = s.get_next();
             if(m == null) break;

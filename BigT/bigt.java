@@ -720,7 +720,6 @@ public class bigt implements Filetype, GlobalConst {
                     dpinfo.pageId = currentDataPageId;
                     dpinfo.recct = 1;
                     dpinfo.availspace = currentDataPage.available_space();
-                    System.out.println(_firstDirPageId.pid);
                 }
                 if(type==2){
                     btf2.insert(new StringKey(rowLabel), rid);

@@ -54,6 +54,8 @@ public class Sort extends Iterator implements GlobalConst
   private String       _colname;
   private ArrayList<pnode> arrayList;
   private int          current_row_max_int = 0;
+  private int          current_row_min_int = Integer.MAX_VALUE;
+  private int          rowSortOrder;
   private PriorityQueue Qs;
   private boolean useBM = false; // flag for whether to use buffer manager
   
@@ -484,35 +486,68 @@ public class Sort extends Iterator implements GlobalConst
 
     while(true){
       cur_node = pcurr_Q.deq();
-      if (cur_node == null) {
-        hashtable.put(current_row, arrayList);
-        cupq.add(new customPnode(prev_node, current_row_max_int));
-        break;
-      }
-      Map map = cur_node.map;
-      map.mapSetup();
-      if (current_row.equals("None")){
-        current_row = map.getRowLabel();
-        if(map.getColumnLabel().equals(_colname)){
-          current_row_max_int = map.getTimeStamp();
+      if(rowSortOrder == MapOrder.Ascending){
+        if (cur_node == null) {
+          hashtable.put(current_row, arrayList);
+          cupq.add(new customPnode(prev_node, current_row_max_int));
+          break;
         }
-        prev_node = cur_node;
-        arrayList.add(cur_node);
-        continue;
-      }else if(current_row.equals(map.getRowLabel())){
-        if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() > current_row_max_int){
-          current_row_max_int = map.getTimeStamp();
+        Map map = cur_node.map;
+        map.mapSetup();
+        if (current_row.equals("None")){
+          current_row = map.getRowLabel();
+          if(map.getColumnLabel().equals(_colname)){
+            current_row_max_int = map.getTimeStamp();
+          }
+          prev_node = cur_node;
+          arrayList.add(cur_node);
+          continue;
+        }else if(current_row.equals(map.getRowLabel())){
+          if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() > current_row_max_int){
+            current_row_max_int = map.getTimeStamp();
+          }
+          arrayList.add(cur_node);
+          prev_node = cur_node;
+          continue; ///////// Could be error here
+        }else {
+          hashtable.put(current_row,arrayList);
+          current_row = map.getRowLabel();
+          cupq.add(new customPnode(prev_node, current_row_max_int));
+          current_row_max_int = 0;
+          arrayList= new ArrayList<>();
+          pcurr_Q.enq(cur_node);
         }
-        arrayList.add(cur_node);
-        prev_node = cur_node;
-        continue; ///////// Could be error here
       }else {
-        hashtable.put(current_row,arrayList);
-        current_row = map.getRowLabel();
-        cupq.add(new customPnode(prev_node, current_row_max_int));
-        current_row_max_int = 0;
-        arrayList= new ArrayList<>();
-        pcurr_Q.enq(cur_node);
+        if (cur_node == null) {
+          hashtable.put(current_row, arrayList);
+          cupq.add(new customPnode(prev_node, current_row_min_int));
+          break;
+        }
+        Map map = cur_node.map;
+        map.mapSetup();
+        if (current_row.equals("None")){
+          current_row = map.getRowLabel();
+          if(map.getColumnLabel().equals(_colname)){
+            current_row_min_int = map.getTimeStamp();
+          }
+          prev_node = cur_node;
+          arrayList.add(cur_node);
+          continue;
+        }else if(current_row.equals(map.getRowLabel())){
+          if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() < current_row_min_int){
+            current_row_min_int = map.getTimeStamp();
+          }
+          arrayList.add(cur_node);
+          prev_node = cur_node;
+          continue; ///////// Could be error here
+        }else {
+          hashtable.put(current_row,arrayList);
+          current_row = map.getRowLabel();
+          cupq.add(new customPnode(prev_node, current_row_min_int));
+          current_row_min_int = Integer.MAX_VALUE;
+          arrayList= new ArrayList<>();
+          pcurr_Q.enq(cur_node);
+        }
       }
     }
     // now the queue is full, starting writing to file while keep trying
@@ -1013,7 +1048,8 @@ public class Sort extends Iterator implements GlobalConst
         ) throws IOException, SortException, HFDiskMgrException, HFBufMgrException, HFException, InvalidSlotNumberException
   {
     arrayList = new ArrayList<pnode>();
-    cupq = new PriorityQueue<customPnode>(10, new MapConstructor3(MapOrder.Ascending));
+    cupq = new PriorityQueue<customPnode>(10, new MapConstructor3(sort_order.mapOrder));
+    rowSortOrder = sort_order.mapOrder;
     _colname = colname;
     isRowSort = true;
     short[] str_sizes = {32,32,32};
@@ -1059,7 +1095,7 @@ public class Sort extends Iterator implements GlobalConst
     }else if(_order_type == 5){
       _sort_fld = 3;
     }
-    order = sort_order;
+    order = new MapOrder(MapOrder.Ascending);
     _n_pages = n_pages;
     
     // this may need change, bufs ???  need io_bufs.java
