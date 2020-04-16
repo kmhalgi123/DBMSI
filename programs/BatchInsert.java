@@ -58,7 +58,10 @@ public class BatchInsert {
     InvalidSelectionException, UnknownKeyTypeException, GetFileEntryException, ConstructPageException,
     AddFileEntryException, IteratorException, HashEntryNotFoundException, InvalidFrameNumberException,
     PageUnpinnedException, ReplacerException, HFDiskMgrException, HFBufMgrException, HFException,
-    HashOperationException, PagePinnedException, PageNotFoundException, BufMgrException, IOException {
+    HashOperationException, PagePinnedException, PageNotFoundException, BufMgrException, IOException,
+    InvalidSlotNumberException, KeyTooLongException, KeyNotMatchException, LeafInsertRecException,
+    IndexInsertRecException, UnpinPageException, PinPageException, NodeNotMatchException, ConvertException,
+    DeleteRecException, IndexSearchException, LeafDeleteException, InsertException {
         String filepath = words[1];
         int type = Integer.parseInt(words[2]);
         String dbname = words[3];
@@ -434,11 +437,14 @@ public class BatchInsert {
     ConstructPageException, AddFileEntryException, IteratorException, HashEntryNotFoundException,
     InvalidFrameNumberException, PageUnpinnedException, ReplacerException, HFDiskMgrException,
     HFBufMgrException, HFException, HashOperationException, PagePinnedException, PageNotFoundException,
-    BufMgrException {
+    BufMgrException, InvalidSlotNumberException, KeyTooLongException, KeyNotMatchException,
+    LeafInsertRecException, IndexInsertRecException, UnpinPageException, PinPageException,
+    NodeNotMatchException, ConvertException, DeleteRecException, IndexSearchException, LeafDeleteException,
+    InsertException {
         updateNumbuf(numbf);
         f = new bigt(dbFileName);
         f.batchInsert(filepath, type, dbFileName, numbf);
-        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata3.csv 2 bd 100
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata4.csv 2 bd 500
         return true;
     }
 
