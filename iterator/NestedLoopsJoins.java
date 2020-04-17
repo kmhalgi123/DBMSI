@@ -33,6 +33,8 @@ public class NestedLoopsJoins extends Iterator {
   private int nOutFlds;
   private bigt bt;
   private Stream inner;
+  MID mid = new MID();
+
 
   /**
    * constructor Initialize the two relations which are joined, including relation
@@ -119,11 +121,11 @@ public class NestedLoopsJoins extends Iterator {
       InvalidTypeException, PageNotReadException, MapUtilsException, PredEvalException, SortException, LowMemException,
       UnknowAttrType, UnknownKeyTypeException, Exception {
     // This is a DUMBEST form of a join, not making use of any key information...
-
+    // MID mid = new MID();  
     if (done)
       return null;
     do {
-      MID mid = new MID();  
+      
 
       // If get_from_outer is true, Get a tuple from the outer, delete
       // an existing scan on the file, and reopen a new scan on the file.
@@ -162,14 +164,20 @@ public class NestedLoopsJoins extends Iterator {
       MID rid = new MID();
       inner_tuple = inner.getNext(rid);
       while (inner_tuple != null) {
-        System.out.println(inner_tuple.getColumnLabel());
         inner_tuple.setHdr(t2_str_sizescopy);
         if (PredEval.Eval(RightFilter, inner_tuple, null) == true) {
           if (PredEval.Eval(OutputFilter, outer_tuple, inner_tuple) == true) {
+            // System.out.println(inner_tuple.getRowLabel() + "Inner tuple");
+
+            // System.out.println(outer_tuple.getRowLabel() + "outer tuple");
+
             // Apply a projection on the outer and inner tuples.
             Projection.Join(outer_tuple, inner_tuple, Jtuple, perm_mat, nOutFlds);
             return Jtuple;
+          
           }
+          else 
+            return null;
         }
       }
 

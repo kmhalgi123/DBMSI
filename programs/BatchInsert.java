@@ -387,14 +387,17 @@ public class BatchInsert {
 
     }
 
-    private static void Query3_CondExpr(CondExpr[] expr) {
+    private static void Query3_CondExpr(CondExpr[] expr, String columnName) {
 
         expr[0].next = null;
+        expr[0].fldNo = 2;
         expr[0].op = new AttrOperator(AttrOperator.aopEQ);
         expr[0].type1 = new AttrType(AttrType.attrSymbol);
         expr[0].type2 = new AttrType(AttrType.attrSymbol);
         expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
         expr[0].operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+
+        expr[0].operand2.string = columnName;
         expr[1] = null;
     }
 
@@ -414,7 +417,7 @@ public class BatchInsert {
         outFilter[0] = new CondExpr();
         outFilter[1] = new CondExpr();
 
-        Query3_CondExpr(outFilter);
+        Query3_CondExpr(outFilter, columnName);
 
         AttrType map1[] = { new AttrType(AttrType.attrString), new AttrType(AttrType.attrString),
                 new AttrType(AttrType.attrInteger), new AttrType(AttrType.attrString) };
@@ -432,7 +435,7 @@ public class BatchInsert {
         sizes2[1] = 32;
         sizes2[2] = 32;
 
-        // Right table
+        // // left table
         FldSpec[] proj_list = { new FldSpec(new RelSpec(RelSpec.outer), 1), new FldSpec(new RelSpec(RelSpec.outer), 2),
                 new FldSpec(new RelSpec(RelSpec.outer), 3), new FldSpec(new RelSpec(RelSpec.outer), 4) };
 
@@ -444,11 +447,12 @@ public class BatchInsert {
             e.printStackTrace();
         }
 
-        Map map = new Map();
+        Map mapLeft = new Map();
         try {
-            while ((map = inl.get_next()) != null) {
-                map.mapSetup();
-                map.print();
+            while ((mapLeft = inl.get_next()) != null) {
+
+                mapLeft.mapSetup();
+                mapLeft.print();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -459,6 +463,7 @@ public class BatchInsert {
         } catch (Exception e) {
             e.printStackTrace();
         }
+     
 
         return true;
     }

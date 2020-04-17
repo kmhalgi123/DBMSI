@@ -30,6 +30,7 @@ public class Projection
 	public static void Join(Map m1, Map m2, Map Jmap, FldSpec perm_mat[], int nOutFlds)
 			throws UnknowAttrType, FieldNumberOutOfBoundException, IOException, MapUtilsException
     {
+		// System.out.println(m1.getRowLabel() + "in projection");
 		AttrType[] type1 = {new AttrType(AttrType.attrString),
 			new AttrType(AttrType.attrString),
 			new AttrType(AttrType.attrInteger),
@@ -48,6 +49,7 @@ public class Projection
 							Jmap.setTimeStamp(m1.getTimeStamp());
 							break;
 						case AttrType.attrString:
+							// System.out.println( m1.getStrFld(perm_mat[i].offset) + "offset");
 							Jmap.setStrFld(i+1, m1.getStrFld(perm_mat[i].offset));
 							break;
 						default:
