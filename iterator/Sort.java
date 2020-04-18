@@ -486,68 +486,35 @@ public class Sort extends Iterator implements GlobalConst
 
     while(true){
       cur_node = pcurr_Q.deq();
-      if(rowSortOrder == MapOrder.Ascending){
-        if (cur_node == null) {
-          hashtable.put(current_row, arrayList);
-          cupq.add(new customPnode(prev_node, current_row_max_int));
-          break;
+      if (cur_node == null) {
+        hashtable.put(current_row, arrayList);
+        cupq.add(new customPnode(prev_node, current_row_max_int));
+        break;
+      }
+      Map map = cur_node.map;
+      map.mapSetup();
+      if (current_row.equals("None")){
+        current_row = map.getRowLabel();
+        if(map.getColumnLabel().equals(_colname)){
+          current_row_max_int = map.getTimeStamp();
         }
-        Map map = cur_node.map;
-        map.mapSetup();
-        if (current_row.equals("None")){
-          current_row = map.getRowLabel();
-          if(map.getColumnLabel().equals(_colname)){
-            current_row_max_int = map.getTimeStamp();
-          }
-          prev_node = cur_node;
-          arrayList.add(cur_node);
-          continue;
-        }else if(current_row.equals(map.getRowLabel())){
-          if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() > current_row_max_int){
-            current_row_max_int = map.getTimeStamp();
-          }
-          arrayList.add(cur_node);
-          prev_node = cur_node;
-          continue; ///////// Could be error here
-        }else {
-          hashtable.put(current_row,arrayList);
-          current_row = map.getRowLabel();
-          cupq.add(new customPnode(prev_node, current_row_max_int));
-          current_row_max_int = 0;
-          arrayList= new ArrayList<>();
-          pcurr_Q.enq(cur_node);
+        prev_node = cur_node;
+        arrayList.add(cur_node);
+        continue;
+      }else if(current_row.equals(map.getRowLabel())){
+        if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() > current_row_max_int){
+          current_row_max_int = map.getTimeStamp();
         }
+        arrayList.add(cur_node);
+        prev_node = cur_node;
+        continue; ///////// Could be error here
       }else {
-        if (cur_node == null) {
-          hashtable.put(current_row, arrayList);
-          cupq.add(new customPnode(prev_node, current_row_min_int));
-          break;
-        }
-        Map map = cur_node.map;
-        map.mapSetup();
-        if (current_row.equals("None")){
-          current_row = map.getRowLabel();
-          if(map.getColumnLabel().equals(_colname)){
-            current_row_min_int = map.getTimeStamp();
-          }
-          prev_node = cur_node;
-          arrayList.add(cur_node);
-          continue;
-        }else if(current_row.equals(map.getRowLabel())){
-          if(map.getColumnLabel().equals(_colname) && map.getTimeStamp() < current_row_min_int){
-            current_row_min_int = map.getTimeStamp();
-          }
-          arrayList.add(cur_node);
-          prev_node = cur_node;
-          continue; ///////// Could be error here
-        }else {
-          hashtable.put(current_row,arrayList);
-          current_row = map.getRowLabel();
-          cupq.add(new customPnode(prev_node, current_row_min_int));
-          current_row_min_int = Integer.MAX_VALUE;
-          arrayList= new ArrayList<>();
-          pcurr_Q.enq(cur_node);
-        }
+        hashtable.put(current_row,arrayList);
+        current_row = map.getRowLabel();
+        cupq.add(new customPnode(prev_node, current_row_max_int));
+        current_row_max_int = 0;
+        arrayList= new ArrayList<>();
+        pcurr_Q.enq(cur_node);
       }
     }
     // now the queue is full, starting writing to file while keep trying

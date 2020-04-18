@@ -445,7 +445,7 @@ public class BatchInsert {
         updateNumbuf(numbf);
         f = new bigt(dbFileName);
         f.batchInsert(filepath, type, dbFileName, numbf);
-        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata4.csv 2 bd 500
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata5.csv 1 bd 500
         return true;
     }
 

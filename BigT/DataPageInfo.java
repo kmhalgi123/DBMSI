@@ -79,7 +79,7 @@ class DataPageInfo implements GlobalConst{
 
     else{
       data = _atuple.getMapByteArray("di");
-      // System.out.println("DPINFO: "+ _atuple.getMapOffset());
+      // System.out.println(Arrays.toString(a));
       offset = _atuple.getMapOffset();
   
       availspace = ConvertMap.getIntValue(offset, data);

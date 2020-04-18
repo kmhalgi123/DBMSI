@@ -930,6 +930,7 @@ public class bigt implements Filetype, GlobalConst {
     public boolean batchInsert(String filepath, int type, String dbfile, int numbf){
         String UTF_BOM = "\uFEFF";
         ArrayList<MID> toDelete = new ArrayList<>();
+        PriorityQueue<MID> list = new PriorityQueue<>(10, new MIDComparator());
         try{
             FileInputStream fin;
             fin = new FileInputStream(filepath);
@@ -1099,7 +1100,7 @@ public class bigt implements Filetype, GlobalConst {
                         MapMID mm  = pq.poll();
                         if(c3 > 2){
                             // btf.Delete(new StringKey(mm.getMap().getColumnLabel()+mm.getMap().getRowLabel()), mm.getMID());
-                            toDelete.add(mm.getMID());
+                            list.add(mm.getMID());
                         }
                         c3++;
                     }
@@ -1109,10 +1110,10 @@ public class bigt implements Filetype, GlobalConst {
                 c2++;
                 System.out.println("Checked the versions for "+c2+"th entry");
             }
-            // System.out.println("Deleting duplicate records "+ toDelete.size());
-            for (MID mid : toDelete) {
-                System.out.println(deleteMap(mid));
-            }
+            System.out.println("Deleting duplicate records "+ list.size());
+            // batchDelete(list);
+            // deleteMap(list.poll());
+            batchDelete(list);
             System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt() +"\nTotal Distinct Column Count: "+getColumnCnt());
             
             btf.destroyFile();
@@ -1166,8 +1167,7 @@ public class bigt implements Filetype, GlobalConst {
                 
                 DataPageInfo dpinfo = new DataPageInfo(amap);
                 try{
-                pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
-            
+                    pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
             
                     //check error;need unpin currentDirPage
                 } catch (Exception e) {
@@ -1588,8 +1588,224 @@ public class bigt implements Filetype, GlobalConst {
                 
                 unpinPage(currentDirPageId, true /* == DIRTY */);
 	        }
-	    }
+        }
+        
         return true;
+    }
+
+    public boolean batchDelete(PriorityQueue<MID> list) throws HFBufMgrException, IOException,
+    InvalidSlotNumberException, HFException {
+        BigPage currentDirPage = new BigPage();
+        BigPage currentDataPage = new BigPage();
+        PageId currentDataPageId = new PageId();
+        PageId nextDirPageId = new PageId();
+        MID currentDataPageRid = new MID();
+        PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+        pinPage(currentDirPageId, currentDirPage, false);
+        MID thisPageRid = currentDirPage.firstMap();
+        DataPageInfo dpinfo = null;
+        Map amap = new Map();
+        listLoop: while(!list.isEmpty()){
+            MID toDelete = list.poll();
+            if(toDelete.pageNo.pid == currentDataPageId.pid){
+                currentDataPage.deleteMap(toDelete);
+                byte [] recbyt = new byte[4];
+                byte [] available_space_by = new byte[4];
+                System.arraycopy(amap.data, amap.getMapOffset(), available_space_by, 0, 4);
+                System.arraycopy(amap.data, amap.getMapOffset()+4, recbyt, 0, 4);
+                int recm = ConvertMap.getIntValue(0, recbyt);
+                int as = ConvertMap.getIntValue(0, available_space_by);
+                recm--;
+                if (recm >= 1) {
+                    as = currentDataPage.available_space();
+                    ConvertMap.setIntValue(as, amap.getMapOffset(), amap.data);
+                    ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
+                    continue listLoop;
+                }else {
+                    unpinPage(currentDataPageId, false /*undirty*/);
+                    freePage(currentDataPageId);
+
+                    currentDirPage.deleteMap(currentDataPageRid);
+                    currentDataPageRid = currentDirPage.firstMap();
+                    PageId pageId;
+                    pageId = currentDirPage.getPrevPage();
+                    if((currentDataPageRid == null)&&(pageId.pid != INVALID_PAGE)) {
+                        
+                        BigPage prevDirPage = new BigPage();
+                        pinPage(pageId, prevDirPage, false);
+        
+                        pageId = currentDirPage.getNextPage();
+                        prevDirPage.setNextPage(pageId);
+                        pageId = currentDirPage.getPrevPage();
+                        
+                        unpinPage(pageId, false);
+                        // set prevPage-pointer of next Page
+                        pageId = currentDirPage.getNextPage();
+                        if(pageId.pid != INVALID_PAGE) {
+                            BigPage nextDirPage = new BigPage();
+                            pageId = currentDirPage.getNextPage();
+                            pinPage(pageId, nextDirPage, false);
+                            
+                            //nextDirPage.openHFpage(apage);
+                            
+                            pageId = currentDirPage.getPrevPage();
+                            nextDirPage.setPrevPage(pageId);
+                            pageId = currentDirPage.getNextPage();
+                            unpinPage(pageId, true /* = DIRTY */);
+                        }
+                        // pageId = currentDirPage.getPrevPage();
+                        // delete empty directory page: (automatically unpinned?)
+                        unpinPage(currentDirPageId, false/*undirty*/);
+                        freePage(currentDirPageId);
+                        // pinPage(pageId, currentDirPage, false);
+                
+                    } else {
+                        // either (the directory page has at least one more datapagerecord
+                        // entry) or (it is the first directory page):
+                        // in both cases we do not delete it, but we have to unpin it:
+                        
+                        // unpinPage(currentDirPageId, true /* == DIRTY */);
+                    }
+                
+                }
+                if(list.size() == 0){
+                    try{
+                        unpinPage(currentDataPageId, false);
+                        unpinPage(currentDirPageId, false);
+                    }catch (Exception e){}
+                }
+                continue listLoop;
+
+            }
+            else{
+                while(currentDirPageId.pid != INVALID_PAGE){
+                    secondLoop: for(currentDataPageRid = thisPageRid; currentDataPageRid != null; currentDataPageRid = currentDirPage.nextMap(currentDataPageRid)){
+                        try{
+                            amap = currentDirPage.returnRecord(currentDataPageRid);
+                        }catch(InvalidSlotNumberException e){
+                            // e.printStackTrace();
+                            // System.out.println(currentDataPageRid.pageNo.pid + " "+currentDataPageRid.slotNo + " "+ currentDirPageId.pid);
+                            continue secondLoop;
+                        }
+                        // System.out.println("THIS");
+                        dpinfo = new DataPageInfo(amap);
+                        // System.out.println(dpinfo.pageId.pid);
+                        // currentDataPageId.pid = ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data);
+                        if(ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data) == toDelete.pageNo.pid){
+                            try{
+                                unpinPage(currentDataPageId, false);
+                            }catch (Exception e){
+                                // e.printStackTrace();
+                            }
+                            thisPageRid = currentDataPageRid;
+                            currentDataPageId.pid = ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data);
+                            pinPage(currentDataPageId, currentDataPage, false);
+                            currentDataPage.deleteMap(toDelete);
+                            byte [] recbyt = new byte[4];
+                            byte [] available_space_by = new byte[4];
+                            System.arraycopy(amap.data, amap.getMapOffset(), available_space_by, 0, 4);
+                            System.arraycopy(amap.data, amap.getMapOffset()+4, recbyt, 0, 4);
+                            int recm = ConvertMap.getIntValue(0, recbyt);
+                            recm--;
+                            if (recm >= 1) {
+                                // more records remain on datapage so it still hangs around.  
+                                // we just need to modify its directory entry
+                                
+                                dpinfo.availspace = currentDataPage.available_space();
+ 
+                                // amap = currentDirPage.getMap(currentDataPageRid);
+                                ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
+                                ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
+                                amap = currentDirPage.returnRecord(currentDataPageRid);
+                                // System.out.println(Arrays.toString(amap.data));
+                                continue listLoop;
+                            }else {
+                                unpinPage(currentDataPageId, false /*undirty*/);
+                            
+                                freePage(currentDataPageId);
+                                
+                                // delete corresponding DataPageInfo-entry on the directory page:
+                                // currentDataPageRid points to datapage (from for loop above)
+                                
+                                currentDirPage.deleteMap(currentDataPageRid);
+                                currentDataPageRid = currentDirPage.firstMap();
+                                PageId pageId;
+                                pageId = currentDirPage.getPrevPage();
+                                if((currentDataPageRid == null)&&(pageId.pid != INVALID_PAGE)) {
+                                    // the directory-page is not the first directory page and it is empty:
+                                    // delete it
+                                    
+                                    // point previous page around deleted page:
+                                    
+                                    BigPage prevDirPage = new BigPage();
+                                    pinPage(pageId, prevDirPage, false);
+                    
+                                    pageId = currentDirPage.getNextPage();
+                                    prevDirPage.setNextPage(pageId);
+                                    pageId = currentDirPage.getPrevPage();
+                                    unpinPage(pageId, true /* = DIRTY */);
+                                    
+                                    
+                                    // set prevPage-pointer of next Page
+                                    pageId = currentDirPage.getNextPage();
+                                    if(pageId.pid != INVALID_PAGE) {
+                                        BigPage nextDirPage = new BigPage();
+                                        pageId = currentDirPage.getNextPage();
+                                        pinPage(pageId, nextDirPage, false);
+                                        
+                                        //nextDirPage.openHFpage(apage);
+                                        
+                                        pageId = currentDirPage.getPrevPage();
+                                        nextDirPage.setPrevPage(pageId);
+                                        pageId = currentDirPage.getNextPage();
+                                        unpinPage(pageId, true /* = DIRTY */);
+                                    }
+                                    // pageId = currentDirPage.getPrevPage();
+                                    // delete empty directory page: (automatically unpinned?)
+                                    unpinPage(currentDirPageId, false/*undirty*/);
+                                    freePage(currentDirPageId);
+                                    // pinPage(pageId, currentDirPage, false);
+                                    
+                            
+                                } else {
+                                    // either (the directory page has at least one more datapagerecord
+                                    // entry) or (it is the first directory page):
+                                    // in both cases we do not delete it, but we have to unpin it:
+                                    
+                                    // unpinPage(currentDirPageId, true /* == DIRTY */);
+                                }
+                            }
+                            continue listLoop;
+                        }
+                    }
+                    nextDirPageId = currentDirPage.getNextPage();
+                    Map ak = currentDirPage.returnRecord(currentDirPage.firstMap());
+                    // System.out.println(Arrays.toString(ak.data));
+                    try{
+                        unpinPage(currentDirPageId, true /*undirty*/);
+                        unpinPage(currentDataPageId, true);
+                    }
+                    catch(Exception e) {
+                        throw new HFException (e, "heapfile,_find,unpinpage failed");
+                    }
+            
+                    currentDirPageId.pid = nextDirPageId.pid;
+                    if(currentDirPageId.pid != INVALID_PAGE) {
+                        pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+                        thisPageRid = currentDirPage.firstMap();
+                        if(currentDirPage == null)
+                            throw new HFException(null, "pinPage return null page");  
+                    }
+                }
+            }
+        }
+        try {
+            unpinPage(currentDataPageId, true);
+            unpinPage(currentDirPageId, true);
+        } catch (Exception e) {
+            //TODO: handle exception
+        }
+        return false;
     }
 
     public boolean updateMap(MID mid, Map newmap)
