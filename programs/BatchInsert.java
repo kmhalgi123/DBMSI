@@ -11,26 +11,15 @@ import global.*;
 import iterator.*;
 import index.*;
 
-// batchinsert project2_testdata.csv 2 bigtable2
-// batchinsert small1.csv 2 bigtable2
-// batchinsert small2.csv 2 bigtable2
 public class BatchInsert {
-    static String fpath = "";
+    static String fpath = "/tmp/";
     static bigt f = null;
-    static bigt f1 = null;
-    static bigt f2 = null;
-    static bigt outbt = null;
-    static String outbtname;
-    static String bigTFileName;
     String dbFileName = "project2_testdata.csv";
 
     public static void main(String[] args) {
 
         PCounter.initialize();
         Scanner sc = new Scanner(System.in);
-        // SystemDefs sysdef = new SystemDefs(fpath + "database", 500, 500, "Clock");
-
-        // SystemDefs sysdef = new SystemDefs(fpath + "bigdata", 8000, 500, "Clock");
 
         new SystemDefs(fpath + "bigdata", 20000, 500, "Clock");
         boolean quit = false;
@@ -38,10 +27,8 @@ public class BatchInsert {
         try {
             do {
                 System.out.print(">> ");
-
                 String que = sc.nextLine();
                 String[] words = que.split("\\s+");
-
                 if (words[0].equals("batchinsert")) {
                     batchInsertDriver(words);
                 } else if (words[0].equals("query")) {
@@ -408,7 +395,6 @@ public class BatchInsert {
             f = new bigt(file);
             System.out.println("Map count in "+file+": "+f.getMapCnt()+ "\nDistinct row count in "+file+": "+f.getRowCnt()+"\nDistinct column count in "+file+": "+f.getColumnCnt());
         }
-
     }
 
     public static void rowSortDriver(String[] words) throws UnknowAttrType, LowMemException, JoinsException, Exception {
@@ -472,9 +458,8 @@ public class BatchInsert {
         indexSelect[0] = null;
         indexSelect[1] = null;
 
-        short[] s_sizes = { 32, 32, 32 };
-        f = new bigt(filename);
-        // System.out.println("Query Map Count" + f.getMapCnt());
+        short[] s_sizes = {32,32,32};
+
         AttrType[] attrType = new AttrType[4];
         attrType[0] = new AttrType(AttrType.attrString);
         attrType[1] = new AttrType(AttrType.attrString);
@@ -501,189 +486,14 @@ public class BatchInsert {
             if(map == null){
                 break;
             }
+            map.print();
+            c++;
         }
-
-        if (type == 2) {
-            btf = new BTreeFile("Adithya");
-            if (select != null) {
-                int i = 0;
-                for (CondExpr condExpr : select) {
-                    if (condExpr != null) {
-                        if (condExpr.fldNo == 1) {
-                            if (condExpr.op.attrOperator == AttrOperator.aopEQ) {
-                                indexSelect[0] = condExpr;
-                                indexSelect[1] = null;
-                            } else {
-                                indexSelect[i] = condExpr;
-                                i++;
-                            }
-                        }
-                    }
-                }
-            }
-            try {
-                IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), filename, "Adithya", attrType,
-                        attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if (order != 0) {
-                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
-                }
-                Map map = new Map();
-                // System.out.println();
-                while (!done) {
-
-                    if (order == 0) {
-                        map = indexScan.get_next();
-                    } else {
-                        map = s.get_next();
-                    }
-                    if (map == null) {
-                        done = true;
-                    } else {
-                        map.print();
-                        c++;
-                    }
-
-                }
-
-                btf.close();
-                btf.destroyFile();
-                try {
-                    indexScan.close();
-                    if (s != null) {
-                        s.close();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (type == 3) {
-            btf = new BTreeFile("Adithya");
-
-            // select[0] = select[1];
-            // select[1] = null;
-            if (select != null) {
-                int i = 0;
-                for (CondExpr condExpr : select) {
-                    if (condExpr != null) {
-                        if (condExpr.fldNo == 2) {
-                            if (condExpr.op.attrOperator == AttrOperator.aopEQ) {
-                                indexSelect[0] = condExpr;
-                                indexSelect[1] = null;
-                            } else {
-                                indexSelect[i] = condExpr;
-                                i++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            try {
-                IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), filename, "Adithya", attrType,
-                        attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if (order != 0) {
-                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
-                }
-                Map map = new Map();
-                // System.out.println();
-                while (!done) {
-
-                    if (order == 0) {
-                        map = indexScan.get_next();
-                    } else {
-                        map = s.get_next();
-                    }
-                    if (map == null) {
-                        done = true;
-                    } else {
-                        map.print();
-                        c++;
-                    }
-
-                }
-
-                btf.close();
-                btf.destroyFile();
-                try {
-                    indexScan.close();
-                    if (s != null) {
-                        s.close();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        //
-        if (type == 4) {
-            btf = new BTreeFile("Adithya");
-            // select = new CondExpr[2];
-            // select[0].operand2.string += select[1].operand2.string;
-
-            if (select != null) {
-                int i = 0;
-                // for(CondExpr condExpr : select){
-                // if (condExpr != null){
-                // if(condExpr.fldNo == 2){
-                // if(condExpr.op.attrOperator == AttrOperator.aopEQ){
-                // indexSelect[0] = condExpr;
-                // indexSelect[1] = null;
-                // }else{
-                // indexSelect[i] = condExpr;
-                // i++;
-                // }
-                // }
-                // }
-                // }
-            }
-
-            try {
-                IndexScan indexScan = null;
-                indexScan = new IndexScan(new IndexType(IndexType.Column_Row_Label_Index), filename, "Adithya",
-                        attrType, attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
-                if (order != 0) {
-                    s = new Sort(s_sizes, indexScan, order, new MapOrder(MapOrder.Ascending), 32, 300, order);
-                }
-                Map map = new Map();
-                // System.out.println();
-                while (!done) {
-
-                    if (order == 0) {
-                        map = indexScan.get_next();
-                    } else {
-                        map = s.get_next();
-                    }
-                    if (map == null) {
-                        done = true;
-                    } else {
-                        map.print();
-                        c++;
-                    }
-
-                }
-
-                btf.close();
-                btf.destroyFile();
-                try {
-                    indexScan.close();
-                    if (s != null) {
-                        s.close();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+            // fileScan.close();
+            s.close();
+        } catch (Exception e){
+            e.printStackTrace();
         }
         System.out.println();
         return true;
