@@ -4,6 +4,7 @@ package diskmgr;
 
 import java.io.*;
 import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import bufmgr.*;
@@ -12,11 +13,8 @@ import global.*;
 public class BigDB implements GlobalConst {
 
   private static final int bits_per_page = MAX_SPACE * 8;
-
-  int type;
-
-  /**
-   * Open the database with the given name.
+  
+  /** Open the database with the given name.
    *
    * @param name DB_name
    *
@@ -50,13 +48,12 @@ public class BigDB implements GlobalConst {
   /**
    * default constructor.
    */
-  public BigDB(int type) {
-    this.type = type;
-  }
-
-  /**
-   * DB Constructors. Create a database with the specified number of pages where
-   * the page size is the default page size.
+  public BigDB() { }
+  
+  
+  /** DB Constructors.
+   * Create a database with the specified number of pages where the page
+   * size is the default page size.
    *
    * @param name      DB name
    * @param num_pages number of pages in DB
@@ -73,9 +70,9 @@ public class BigDB implements GlobalConst {
     num_pages = (num_pgs > 2) ? num_pgs : 2;
 
     File DBfile = new File(name);
-
-    DBfile.delete();
-
+    
+    // DBfile.delete();
+    
     // Creaat a random access file
     fp = new RandomAccessFile(fname, "rw");
 
@@ -516,6 +513,61 @@ public class BigDB implements GlobalConst {
    * @exception InvalidPageNumberException invalid page number
    * @exception DiskMgrException           error caused by other layers
    */
+  public ArrayList<String> get_all_files()
+    throws IOException,
+	   FileIOException,
+	   InvalidPageNumberException, 
+	   DiskMgrException {
+
+    Page apage = new Page();
+    boolean found = false;
+    int slot = 0;
+    PageId hpid = new PageId();
+    PageId nexthpid = new PageId(0);
+    DBHeaderPage dp;
+    ArrayList<String> list = new ArrayList<>();
+    do {// Start DO01
+	
+	    // System.out.println("get_file_entry do-loop01: "+name);
+      hpid.pid = nexthpid.pid;
+
+      // Pin the header page.
+      pinPage(hpid, apage, false /*no diskIO*/);
+
+      // This complication is because the first page has a different
+            // structure from that of subsequent pages.
+      if(hpid.pid==0)
+      {
+        dp = new DBFirstPage();
+        ((DBFirstPage) dp).openPage(apage);
+      }
+	    else
+      {
+        dp = new DBDirectoryPage();
+        ((DBDirectoryPage) dp).openPage(apage);
+      }
+      nexthpid = dp.getNextPage();
+      
+      int entry = 0;
+      PageId tmppid = new PageId();
+      String tmpname;
+	
+      while(entry < dp.getNumOfEntries())
+      {
+        tmpname = dp.getFileEntry(tmppid, entry);
+        
+        if((tmppid.pid == INVALID_PAGE)) break; 
+        list.add(tmpname);
+        entry ++;
+      }
+	
+	    unpinPage(hpid, false /*undirty*/);
+	
+    }while(nexthpid.pid!=INVALID_PAGE);// End of DO01
+    
+    return list;
+  }
+
   public PageId get_file_entry(String name)
       throws IOException, FileIOException, InvalidPageNumberException, DiskMgrException {
 
@@ -576,8 +628,9 @@ public class BigDB implements GlobalConst {
     return startpid;
   }
 
-  /**
-   * Functions to return some characteristics of the database.
+  
+  
+  /** Functions to return some characteristics of the database.
    */
   public String db_name() {
     return name;
