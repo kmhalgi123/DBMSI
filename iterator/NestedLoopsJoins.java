@@ -156,7 +156,7 @@ public class NestedLoopsJoins extends Iterator {
           return null;
         }
       } // ENDS: if (get_from_outer == TRUE)
-
+ 
       // The next step is to get a tuple from the inner,
       // while the inner is not completely scanned && there
       // is no match (with pred),get a tuple from the inner.

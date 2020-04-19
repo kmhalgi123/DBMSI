@@ -37,7 +37,7 @@ public class IndexScan extends Iterator {
    * @exception IOException               from the lower layer
    * @throws InvalidRelation
    */
-  public IndexScan(IndexType index, final String relName, final String indName, short str_sizes[],
+  public IndexScan(IndexType index, final String relName, final String indName, AttrType types[], short str_sizes[],
       int noInFlds, int noOutFlds, FldSpec outFlds[], CondExpr selects[], final int fldNum, final boolean indexOnly,
       CondExpr indexSelect[]) throws IndexException, InvalidTypeException, InvalidTupleSizeException,
       UnknownIndexTypeException, IOException, InvalidRelation {
@@ -49,11 +49,7 @@ public class IndexScan extends Iterator {
     // System.out.println( outFlds[0] + " " + outFlds[1]);
     _fldNum = fldNum;
     _noInFlds = noInFlds;
-    _types = new AttrType[4];
-    _types[0] = new AttrType(AttrType.attrString);
-    _types[1] = new AttrType(AttrType.attrString);
-    _types[2] = new AttrType(AttrType.attrInteger);
-    _types[3] = new AttrType(AttrType.attrString);
+    _types = types;
     _s_sizes = str_sizes;
 
     // System.out.println("1");
