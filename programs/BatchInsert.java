@@ -420,6 +420,12 @@ public class BatchInsert {
         outFilter[1] = new CondExpr();
 
         Query3_CondExpr(outFilter, columnName);
+
+
+        CondExpr[] indexSelect = new CondExpr[2];
+        indexSelect[0] = null;
+        indexSelect[1] = null;
+
         // Inner Join
         AttrType map1[] = new AttrType[4];
         map1[0] = new AttrType(AttrType.attrString);
@@ -535,7 +541,7 @@ public class BatchInsert {
 
         System.out.print("After building BTree Index on Column Label\n");
         try {
-          indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), "BigTFile", "innerJoin", map1, sizes1, 4, 4, map1Projection, null, 2, false, outFilter);
+          indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), "BigTFile", "innerJoin", map1, sizes1, 4, 4, map1Projection, outFilter, 2, false, indexSelect);
         }    
         catch (Exception e) {
             System.err.println("Error creating scan for Index scan");
@@ -543,7 +549,7 @@ public class BatchInsert {
 
         NestedLoopsJoins inl = null;
         try {
-            inl = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, leftStream, rightBigtName, outFilter,
+            inl = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, indexScan, rightBigtName, outFilter,
                     null, proj_list, 4);
         } catch (Exception e) {
             e.printStackTrace();

@@ -20,7 +20,7 @@ import java.io.*;
 public class NestedLoopsJoins extends Iterator {
   private AttrType _in1[], _in2[];
   private int in1_len, in2_len;
-  private Stream outer;
+  private Iterator outer;
   private short t2_str_sizescopy[];
   private CondExpr OutputFilter[];
   private CondExpr RightFilter[];
@@ -57,7 +57,7 @@ public class NestedLoopsJoins extends Iterator {
    * @exception NestedLoopException exception from this class
    */
   public NestedLoopsJoins(AttrType in1[], int len_in1, short t1_str_sizes[], AttrType in2[], int len_in2,
-      short t2_str_sizes[], int amt_of_mem, Stream stream, String relationName, CondExpr outFilter[],
+      short t2_str_sizes[], int amt_of_mem, Iterator am, String relationName, CondExpr outFilter[],
       CondExpr rightFilter[], FldSpec proj_list[], int n_out_flds) throws IOException, NestedLoopException {
 
     _in1 = new AttrType[in1.length];
@@ -67,7 +67,7 @@ public class NestedLoopsJoins extends Iterator {
     in1_len = len_in1;
     in2_len = len_in2;
 
-    outer = stream;
+    outer = am;
     t2_str_sizescopy = t2_str_sizes;
     inner_tuple = new Map();
     Jtuple = new Map();
@@ -142,10 +142,11 @@ public class NestedLoopsJoins extends Iterator {
 
         try {
           inner = bt.openStream();
+          
         } catch (Exception e) {
           throw new NestedLoopException(e, "openScan failed");
         }
-        outer_tuple = outer.getNext(mid);
+        outer_tuple = outer.get_next();
         if (outer_tuple  == null) {
           done = true;
           if (inner != null) {
@@ -160,9 +161,8 @@ public class NestedLoopsJoins extends Iterator {
       // The next step is to get a tuple from the inner,
       // while the inner is not completely scanned && there
       // is no match (with pred),get a tuple from the inner.
-
-      MID rid = new MID();
-      inner_tuple = inner.getNext(rid);
+      MID mid = new MID();
+      inner_tuple = inner.getNext(mid);
       while (inner_tuple != null) {
         inner_tuple.setHdr(t2_str_sizescopy);
         if (PredEval.Eval(RightFilter, inner_tuple, null) == true) {
@@ -201,7 +201,7 @@ public class NestedLoopsJoins extends Iterator {
     if (!closeFlag) {
 
       try {
-        outer.closescan();
+        outer.close();
       } catch (Exception e) {
         throw new JoinsException(e, "NestedLoopsJoin.java: error in closing iterator.");
       }
