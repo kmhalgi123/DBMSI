@@ -421,9 +421,56 @@ public class BatchInsert {
 
         Query3_CondExpr(outFilter, columnName);
 
-        CondExpr[] indexSelect = new CondExpr[2];
-        indexSelect[0] = null;
-        indexSelect[1] = null;
+        String table2 = "table2";
+        bigt bt1 = new bigt("table1");
+        bigt bt2 = new bigt(table2);
+
+        // manual insertion code
+        // [R1, C1, 12, 650] - into top timestamps 1
+        // [R2, C1, 12, 300] - into top timestamps 1
+        Map m1 = new Map();
+        m1.setHdr(new short[] { 32, 32, 32 });
+        m1.setRowLabel("R1");
+        m1.setColumnLabel("C1");
+        m1.setValue("650");
+        m1.setTimeStamp(12);
+        Map m2 = new Map();
+        m2.setHdr(new short[] { 32, 32, 32 });
+        m2.setRowLabel("R2");
+        m2.setColumnLabel("C1");
+        m2.setValue("300");
+        m2.setTimeStamp(20);
+        m1.mapSetup();
+        m2.mapSetup();
+        bt1.insertMap(m1.getMapByteArray());
+        bt1.insertMap(m2.getMapByteArray());
+        // manual insertion
+        // [R3, C1, 16, 650] - into top time timestamp2
+        // [R4, C1, 30, 300] - into top time timestamp2
+
+        Map m3 = new Map();
+        m3.setHdr(new short[] { 32, 32, 32 });
+        m3.setRowLabel("R3");
+        m3.setColumnLabel("C1");
+        m3.setTimeStamp(16);
+        m3.setValue("650");
+
+        Map m4 = new Map();
+        m4.setHdr(new short[] { 32, 32, 32 });
+        m4.setRowLabel("R4");
+        m4.setColumnLabel("C1");
+        m4.setTimeStamp(30);
+        m4.setValue("300");
+
+        m3.mapSetup();
+
+        // m3.print();
+        m4.mapSetup();
+        bt2.insertMap(m3.getMapByteArray());
+        bt2.insertMap(m4.getMapByteArray());
+
+        Stream stream1 = bt1.openStream();
+
 
         // Inner Join
         AttrType map1[] = new AttrType[4];
@@ -468,122 +515,46 @@ public class BatchInsert {
         proj_list[2] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
         proj_list[3] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
 
-        bigt bt1 = new bigt("table1");
-        bigt bt2 = new bigt("table2");
+        FldSpec[] proj_listT3 = new FldSpec[4];
+        proj_listT3[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
+        proj_listT3[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
+        proj_listT3[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
+        proj_listT3[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
 
-        boolean done = false;
-        MID mid = new MID();
 
-        java.util.Map<String, Integer> hashMap = new HashMap<>();
-        while (!done) {
-            Map map = leftStream.getNext(mid);
-            if (map == null)
-                done = true;
-            else {
-                if (map.getColumnLabel().equals(columnName)) {
-                    int t = map.getTimeStamp();
-                    if (hashMap.containsKey(map.getRowLabel())) {
+        
+        // rowjoin join1 join2 outjoin C1 10
 
-                        int t2 = hashMap.get(map.getRowLabel());
-                        System.out.println(t2);
-                        if (t2 < t) {
-                            hashMap.put(map.getRowLabel(), map.getTimeStamp());
-                            bt1.insertMap(map.getMapByteArray());
-                        }
-                    } else {
+        // bt1 and bt2 will contain highest timestamps of tabl1 and 2
 
-                        hashMap.put(map.getRowLabel(), map.getTimeStamp());
+        // join bt1 and bt2
+        // Stream stream1 = bt2.openStream();
 
-                    }
-                }
-            }
-        }
-
-        if (hashMap.isEmpty()) {
-
-            System.out.println("map is empty");
-        } else {
-            System.out.println(hashMap);
-        }
         // rowjoin join1 join2 outjoin C1 100
-        Stream newStream = bt1.openStream();
-        done = false;
-       MID mid1 = new MID();
-        while (!done) {
-            Map map12 = newStream.getNext(mid1);
-            if (map12 == null)
-                done = true;
-            else {
-                map12.mapSetup();
-                map12.print();
 
-                }
-            }
-            Stream rightStream = f2.openStream();
-            done = false;
-            System.out.println("break here");
-            MID mid2 = new MID();
-            java.util.Map<String, Integer> hashMap2 = new HashMap<>();
-            while (!done) {
-                Map map = rightStream.getNext(mid2);
-                if (map == null)
-                    done = true;
-                else {
-                    if (map.getColumnLabel().equals(columnName)) {
-                        int t = map.getTimeStamp();
-                        if (hashMap2.containsKey(map.getRowLabel())) {
-    
-                            int t2 = hashMap2.get(map.getRowLabel());
-                            System.out.println(t2);
-                            if (t2 < t) {
-                                hashMap2.put(map.getRowLabel(), map.getTimeStamp());
-                                bt2.insertMap(map.getMapByteArray());
-                            }
-                        } else {
-    
-                            hashMap2.put(map.getRowLabel(), map.getTimeStamp());
-    
-                        }
-                    }
-                }
-            }
-    
-            if (hashMap2.isEmpty()) {
+        // First nested loop with table 1 and table 2
+        String table4 = "table4";
+        bigt bt3 = new bigt("table3");
+        bigt bt4 = new bigt(table4);
 
-                System.out.println("map is empty");
-            } else {
-                
-                System.out.println(hashMap2);
-            }
-
-
-
-       Stream stream1 = bt2.openStream();
-        done = false;
-        MID mid3 = new MID();
-         while (!done) {
-             Map map12 = stream1.getNext(mid3);
-             if (map12 == null)
-                 done = true;
-             else {
-                 map12.mapSetup();
-                 map12.print();
- 
-                 }
-             }
-
-        NestedLoopsJoins inl = null;
+        // creating table 3
+        CondExpr[] selectT3 = new CondExpr[2];
+        selectT3[0] = new CondExpr();
+        selectT3[1] = new CondExpr();
+        QueryT3_CondExpr(selectT3);
+        NestedLoopsJoins nljT3 = null;
         try {
-            inl = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, leftStream, rightBigtName, outFilter,
-                    null, proj_list, 4);
+            nljT3 = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, stream1, table2, selectT3, null,
+                    proj_listT3, 4);
         } catch (Exception e) {
             e.printStackTrace();
         }
         Map mapLeft = new Map();
         try {
-            while ((mapLeft = inl.get_next()) != null) {
+            while ((mapLeft = nljT3.get_next()) != null) {
                 mapLeft.mapSetup();
                 // mapLeft.print();
+                bt3.mapInsert(mapLeft.getMapByteArray());
 
             }
         } catch (Exception e) {
@@ -591,29 +562,147 @@ public class BatchInsert {
         }
 
         try {
-            inl.close();
+            nljT3.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        // printing bt3
+        System.out.println("printing bt3");
+        Stream streamT3 = bt3.openStream();
+        boolean done = false;
+        MID mid3 = new MID();
+        while (!done) {
+            Map mapT3 = streamT3.getNext(mid3);
+            if (mapT3 == null)
+                done = true;
+            else {
+                mapT3.mapSetup();
+                mapT3.print();
+
+            }
+        }
+
+        // creating table4 from topleft and topright
+        System.out.println("break here");
+        Stream streamNew1 = bt1.openStream();
+        FldSpec[] proj_listT4 = new FldSpec[4];
+        proj_listT4[0] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+        proj_listT4[1] = new FldSpec(new RelSpec(RelSpec.innerRel), 2);
+        proj_listT4[2] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
+        proj_listT4[3] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
+
+        NestedLoopsJoins inljT4 = null;
+        try {
+            inljT4 = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, streamNew1, table2, outFilter, null,
+                    proj_listT4, 4);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map mapRight = new Map();
+        try {
+            while ((mapRight = inljT4.get_next()) != null) {
+                mapRight.mapSetup();
+                // mapRight.print();
+                bt4.mapInsert(mapRight.getMapByteArray());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            inljT4.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // printing bt4
+        System.out.println("bt4");
+        Stream streamT4 = bt4.openStream();
+        done = false;
+        MID mid4 = new MID();
+        while (!done) {
+            Map mapT4p = streamT4.getNext(mid3);
+            if (mapT4p == null)
+                done = true;
+            else {
+                mapT4p.mapSetup();
+                mapT4p.print();
+
+            }
+        }
+
+        // rowjoin join1 join2 outjoin C1 100
+
+        bigt bt5 = new bigt("table5");
+
+        FldSpec[] proj_listT5 = new FldSpec[4];
+        proj_listT5[0] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
+        proj_listT5[1] = new FldSpec(new RelSpec(RelSpec.outer), 1);
+        proj_listT5[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
+        proj_listT5[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
+        // R1,R3, R1:R3
+        Stream streamT3New = bt3.openStream();
+        NestedLoopsJoins nljT5 = null;
+        try {
+            nljT5 = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, streamT3New, table4, outFilter, null,
+                    proj_listT5, 4);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map mapT5 = new Map();
+        try {
+            while ((mapT5 = nljT5.get_next()) != null) {
+                mapT5.mapSetup();
+                // mapRight.print();
+                bt5.mapInsert(mapT5.getMapByteArray());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            nljT5.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // printing bt5
+        System.out.println("printing bt5");
+        Stream streamT5 = bt5.openStream();
+        done = false;
+        MID mid5 = new MID();
+        while (!done) {
+            Map mapT5p = streamT5.getNext(mid5);
+            if (mapT5p == null)
+                done = true;
+            else {
+                mapT5p.mapSetup();
+                mapT5p.print();
+
+            }
+        }
+
+
         return true;
     }
 
-    // public static boolean batchInsert(String dbFileName, int type, String
-    // filepath) throws IndexException, InvalidTypeException,
-    // InvalidTupleSizeException, UnknownIndexTypeException,
-    // InvalidSelectionException, IOException, UnknownKeyTypeException,
-    // GetFileEntryException,
-    // ConstructPageException, AddFileEntryException, IteratorException,
-    // HashEntryNotFoundException,
-    // InvalidFrameNumberException, PageUnpinnedException, ReplacerException,
-    // HFDiskMgrException,
-    // HFBufMgrException, HFException {
-    // f = new bigt(dbFileName+"_"+String.valueOf(type));
-    // f.batchInsert(filepath, type, dbFileName+"_"+String.valueOf(type));
-    // return true;
-    // }
+    private static void QueryT3_CondExpr(CondExpr[] expr) {
 
+        expr[0].next  = null;
+        expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+        expr[0].type1 = new AttrType(AttrType.attrSymbol);
+        expr[0].type2 = new AttrType(AttrType.attrSymbol);
+        expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),3);
+        expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),3);
+    
+        expr[0].fldNo = 4;
+        expr[1] = null;
+      }
+
+  
+  
+  
     public static boolean query(String filename, int type, int order, CondExpr[] select)
             throws LowMemException, Exception {
         // Stream s = f.openStream(order, rowFilter, colFilter, valFilter);

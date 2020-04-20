@@ -58,11 +58,12 @@ public class Projection {
 							Jmap.setTimeStamp(m2.getTimeStamp());
 							break;
 						case AttrType.attrString:
-							if (i == 0) {
-								Jmap.setStrFld(i + 1, m1.getStrFld(perm_mat[i].offset) + ":" + m2.getStrFld(perm_mat[i].offset));
-							} else {
-								Jmap.setStrFld(i + 1, m2.getStrFld(perm_mat[i].offset));
-							}
+							// if (i == 0) {
+							// 	Jmap.setStrFld(i + 1, m1.getStrFld(perm_mat[i].offset) + ":" + m2.getStrFld(perm_mat[i].offset));
+							// } else {
+							// 	Jmap.setStrFld(i + 1, m2.getStrFld(perm_mat[i].offset));
+							// }
+							Jmap.setStrFld(i + 1, m2.getStrFld(perm_mat[i].offset));
 							break;
 						default:
 

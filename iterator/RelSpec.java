@@ -13,5 +13,6 @@ public class RelSpec {
   
   public final static int outer = 0;
   public final static int innerRel = 1;
+  public final static int newCase = 2;
 }  
 

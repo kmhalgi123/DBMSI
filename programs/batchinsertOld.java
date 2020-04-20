@@ -130,3 +130,214 @@ public boolean batchInsertOld(String filepath, int type, String dbfile){
     }
     return true;
 }
+
+
+
+
+if (map.getColumnLabel().equals(columnName)) {
+    if (hashMap.containsKey(map.getRowLabel())) {
+        hashMap.put(map.getRowLabel(), new ArrayList<Integer>(Arrays.asList(map.getTimeStamp())));
+            // bt1.insertMap(map.getMapByteArray());
+        }
+        else {
+            hashMap.put(map.getRowLabel(), new ArrayList<Integer>());
+        }
+    } 
+}
+
+
+
+
+
+// second table 
+Stream newStream = bt1.openStream();
+done = false;
+MID mid1 = new MID();
+while (!done) {
+    Map map12 = newStream.getNext(mid1);
+    if (map12 == null)
+        done = true;
+    else {
+        map12.mapSetup();
+        map12.print();
+
+    }
+}
+Stream rightStream = f2.openStream();
+done = false;
+System.out.println("break here");
+MID mid2 = new MID();
+java.util.Map<String, Integer> hashMap2 = new HashMap<>();
+while (!done) {
+    Map mapR = rightStream.getNext(mid2);
+    if (mapR == null)
+        done = true;
+    else {
+        if (mapR.getColumnLabel().equals(columnName)) {
+            int t = mapR.getTimeStamp();
+            if (hashMap2.containsKey(mapR.getRowLabel())) {
+
+                int t2 = hashMap2.get(mapR.getRowLabel());
+                System.out.println(t2);
+                if (t2 < t) {
+                    hashMap2.put(mapR.getRowLabel(), mapR.getTimeStamp());
+                    bt2.insertMap(mapR.getMapByteArray());
+                }
+            } else {
+
+                hashMap2.put(mapR.getRowLabel(), mapR.getTimeStamp());
+
+            }
+        }
+    }
+}
+
+if (hashMap2.isEmpty()) {
+
+    System.out.println("map is empty");
+} else {
+
+    System.out.println(hashMap2);
+}
+
+Stream stream1 = bt2.openStream();
+done = false;
+MID mid3 = new MID();
+while (!done) {
+    Map map12 = stream1.getNext(mid3);
+    if (map12 == null)
+        done = true;
+    else {
+        map12.mapSetup();
+        map12.print();
+
+    }
+}
+
+
+// First table
+boolean done = false;
+MID mid = new MID();
+java.util.Map<String, Integer> hashMap = new HashMap<>();
+Map map = new Map();
+do {
+    map = leftStream.getNext(mid);
+    if (map == null)
+        done = true;
+    else {
+        if (map.getColumnLabel().equals(columnName)) {
+            int t = map.getTimeStamp(); // 19, 60
+            System.out.println(t + "t");
+            if (hashMap.containsKey(map.getRowLabel())) { //R1
+                System.out.println(map.getRowLabel() + "row label");
+
+                int t2 = hashMap.get(map.getRowLabel());
+                 //  t2 = 19, t = 60
+                 System.out.println(t2 + "t2");
+                if (t2 < t) {
+                    t2 = t;
+                    hashMap.put(map.getRowLabel(), t2); // R1:60
+                    bt1.insertMap(map.getMapByteArray());
+                }
+            }
+            else {
+            hashMap.put(map.getRowLabel(), t); // R1: 19
+            }
+        }
+    }
+
+} while (!done);
+
+if (hashMap.isEmpty()) {
+
+    System.out.println("map is empty");
+} else {
+    System.out.println(hashMap);
+}
+
+
+
+
+
+
+
+System.out.println("break here");
+
+FldSpec[] proj_list2 = new FldSpec[4];
+proj_list2[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
+proj_list2[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
+proj_list2[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
+proj_list2[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
+
+
+NestedLoopsJoins inr = null;
+try {
+    inr = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, stream1, newBigtableName, outFilter, null,
+            proj_list2, 4);
+} catch (Exception e) {
+    e.printStackTrace();
+}
+Map mapRight = new Map();
+try {
+    while ((mapRight = inr.get_next()) != null) {
+        mapRight.mapSetup();
+        mapRight.print();
+
+    }
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+try {
+    inr.close();
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+
+
+
+
+Stream streamNew = bt3.openStream();
+boolean done = false;
+MID mid3 = new MID();
+while (!done) {
+    Map map12 = streamNew.getNext(mid3);
+    if (map12 == null)
+        done = true;
+    else {
+        map12.mapSetup();
+        map12.print();
+
+    }
+}
+
+Stream streamNew1 = bt4.openStream();
+done = false;
+MID mid4 = new MID();
+while (!done) {
+    Map map12 = streamNew1.getNext(mid4);
+    if (map12 == null)
+        done = true;
+    else {
+        map12.mapSetup();
+        map12.print();
+
+    }
+}
+
+
+
+
+				// case RelSpec.newCase:
+				// switch (type2[perm_mat[i].offset - 1].attrType) {
+				// 	case AttrType.attrInteger:
+				// 		Jmap.setTimeStamp(m2.getTimeStamp());
+				// 		break;
+				// 	case AttrType.attrString:
+				// 		if(i == 3) {
+				// 			if(m1.getValue().equals(m2.getValue())) {
+				// 			Jmap.setStrFld(i + 1, m2.getStrFld(perm_mat[i].offset));
+				// 		}
+				// 		else 
+				// 	}
