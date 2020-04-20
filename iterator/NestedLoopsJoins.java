@@ -20,7 +20,7 @@ import java.io.*;
 public class NestedLoopsJoins extends Iterator {
   private AttrType _in1[], _in2[];
   private int in1_len, in2_len;
-  private Iterator outer;
+  private Stream outer;
   private short t2_str_sizescopy[];
   private CondExpr OutputFilter[];
   private CondExpr RightFilter[];
@@ -33,7 +33,9 @@ public class NestedLoopsJoins extends Iterator {
   private int nOutFlds;
   private bigt bt;
   private Stream inner;
-  MID mid = new MID();
+  MID rid = new MID();
+   int c = 0;
+
 
 
   /**
@@ -57,7 +59,7 @@ public class NestedLoopsJoins extends Iterator {
    * @exception NestedLoopException exception from this class
    */
   public NestedLoopsJoins(AttrType in1[], int len_in1, short t1_str_sizes[], AttrType in2[], int len_in2,
-      short t2_str_sizes[], int amt_of_mem, Iterator am, String relationName, CondExpr outFilter[],
+      short t2_str_sizes[], int amt_of_mem, Stream am, String relationName, CondExpr outFilter[],
       CondExpr rightFilter[], FldSpec proj_list[], int n_out_flds) throws IOException, NestedLoopException {
 
     _in1 = new AttrType[in1.length];
@@ -123,6 +125,7 @@ public class NestedLoopsJoins extends Iterator {
     // This is a DUMBEST form of a join, not making use of any key information...
     // MID mid = new MID();  
     if (done)
+    
       return null;
     do {
       
@@ -131,7 +134,6 @@ public class NestedLoopsJoins extends Iterator {
       // an existing scan on the file, and reopen a new scan on the file.
       // If a get_next on the outer returns DONE?, then the nested loops
       // join is done too.
-
       if (get_from_outer == true) {
         get_from_outer = false;
         if (inner != null) // If this not the first time,
@@ -146,7 +148,8 @@ public class NestedLoopsJoins extends Iterator {
         } catch (Exception e) {
           throw new NestedLoopException(e, "openScan failed");
         }
-        outer_tuple = outer.get_next();
+
+        outer_tuple = outer.getNext(rid);
         if (outer_tuple  == null) {
           done = true;
           if (inner != null) {
@@ -173,6 +176,7 @@ public class NestedLoopsJoins extends Iterator {
 
             // Apply a projection on the outer and inner tuples.
             Projection.Join(outer_tuple, inner_tuple, Jtuple, perm_mat, nOutFlds);
+           System.out.println(c++);
             return Jtuple;
           
           }
@@ -201,7 +205,7 @@ public class NestedLoopsJoins extends Iterator {
     if (!closeFlag) {
 
       try {
-        outer.close();
+        outer.closescan();
       } catch (Exception e) {
         throw new JoinsException(e, "NestedLoopsJoin.java: error in closing iterator.");
       }

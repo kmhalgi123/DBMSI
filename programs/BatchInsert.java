@@ -3,6 +3,7 @@ package programs;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -403,11 +404,10 @@ public class BatchInsert {
     }
 
     // Row join function
-    // rowjoin join1 join2 outjoin column1 100
+    // rowjoin join1 join2 outjoin C1 10
 
     public static boolean RowJoin(int amt_of_mem, Stream leftStream, String rightBigtName, String columnName)
             throws Exception {
-
 
         // opening the right bigt and outbt
         f2 = new bigt(rightBigtName);
@@ -420,7 +420,6 @@ public class BatchInsert {
         outFilter[1] = new CondExpr();
 
         Query3_CondExpr(outFilter, columnName);
-
 
         CondExpr[] indexSelect = new CondExpr[2];
         indexSelect[0] = null;
@@ -462,7 +461,6 @@ public class BatchInsert {
         map2Projection[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
         map2Projection[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
 
-
         // Join table
         FldSpec[] proj_list = new FldSpec[4];
         proj_list[0] = new FldSpec(new RelSpec(RelSpec.innerRel), 1);
@@ -470,96 +468,122 @@ public class BatchInsert {
         proj_list[2] = new FldSpec(new RelSpec(RelSpec.innerRel), 3);
         proj_list[3] = new FldSpec(new RelSpec(RelSpec.innerRel), 4);
 
-        bigt f = null;
-        try {
-          f = new bigt("BigTFile");
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-    
+        bigt bt1 = new bigt("table1");
+        bigt bt2 = new bigt("table2");
 
-
-        Stream rightStream = null;
-
-        try {
-            rightStream = new Stream(f);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-      
-
-        Map map = new Map();
-        try {
-            map.setHdr(sizes1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        BTreeFile btf = null;
-        try {
-            btf = new BTreeFile("innerJoin", 0, 32, 1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        boolean done = false;
         MID mid = new MID();
-        Map temp = null;
-        try {
-            temp = leftStream.getNext(mid);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Map newMap = new Map();
-        String key = null;
-        while (temp != null) {
-            newMap.mapCopy(temp);
 
-            try {
-                key = newMap.getColumnLabel();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        java.util.Map<String, Integer> hashMap = new HashMap<>();
+        while (!done) {
+            Map map = leftStream.getNext(mid);
+            if (map == null)
+                done = true;
+            else {
+                if (map.getColumnLabel().equals(columnName)) {
+                    int t = map.getTimeStamp();
+                    if (hashMap.containsKey(map.getRowLabel())) {
 
-            try {
-                btf.insert(new StringKey(key), mid);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                        int t2 = hashMap.get(map.getRowLabel());
+                        System.out.println(t2);
+                        if (t2 < t) {
+                            hashMap.put(map.getRowLabel(), map.getTimeStamp());
+                            bt1.insertMap(map.getMapByteArray());
+                        }
+                    } else {
 
-            try {
-                temp = leftStream.getNext(mid);
-            } catch (Exception e) {
-                e.printStackTrace();
+                        hashMap.put(map.getRowLabel(), map.getTimeStamp());
+
+                    }
+                }
             }
         }
 
-        leftStream.closescan();
+        if (hashMap.isEmpty()) {
+
+            System.out.println("map is empty");
+        } else {
+            System.out.println(hashMap);
+        }
+        // rowjoin join1 join2 outjoin C1 100
+        Stream newStream = bt1.openStream();
+        done = false;
+       MID mid1 = new MID();
+        while (!done) {
+            Map map12 = newStream.getNext(mid1);
+            if (map12 == null)
+                done = true;
+            else {
+                map12.mapSetup();
+                map12.print();
+
+                }
+            }
+            Stream rightStream = f2.openStream();
+            done = false;
+            System.out.println("break here");
+            MID mid2 = new MID();
+            java.util.Map<String, Integer> hashMap2 = new HashMap<>();
+            while (!done) {
+                Map map = rightStream.getNext(mid2);
+                if (map == null)
+                    done = true;
+                else {
+                    if (map.getColumnLabel().equals(columnName)) {
+                        int t = map.getTimeStamp();
+                        if (hashMap2.containsKey(map.getRowLabel())) {
+    
+                            int t2 = hashMap2.get(map.getRowLabel());
+                            System.out.println(t2);
+                            if (t2 < t) {
+                                hashMap2.put(map.getRowLabel(), map.getTimeStamp());
+                                bt2.insertMap(map.getMapByteArray());
+                            }
+                        } else {
+    
+                            hashMap2.put(map.getRowLabel(), map.getTimeStamp());
+    
+                        }
+                    }
+                }
+            }
+    
+            if (hashMap2.isEmpty()) {
+
+                System.out.println("map is empty");
+            } else {
+                
+                System.out.println(hashMap2);
+            }
 
 
-        IndexScan indexScan = null;
-        // indexScan = new IndexScan(new IndexType(IndexType.Row_Label_Index), filename, "Adithya", attrType,
-        //         attrSize, 4, 4, proj_list, select, 2, false, indexSelect);
 
-        System.out.print("After building BTree Index on Column Label\n");
-        try {
-          indexScan = new IndexScan(new IndexType(IndexType.Column_Label_Index), "BigTFile", "innerJoin", map1, sizes1, 4, 4, map1Projection, outFilter, 2, false, indexSelect);
-        }    
-        catch (Exception e) {
-            System.err.println("Error creating scan for Index scan");
-          }
+       Stream stream1 = bt2.openStream();
+        done = false;
+        MID mid3 = new MID();
+         while (!done) {
+             Map map12 = stream1.getNext(mid3);
+             if (map12 == null)
+                 done = true;
+             else {
+                 map12.mapSetup();
+                 map12.print();
+ 
+                 }
+             }
 
         NestedLoopsJoins inl = null;
         try {
-            inl = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, indexScan, rightBigtName, outFilter,
+            inl = new NestedLoopsJoins(map1, 4, sizes1, map2, 4, sizes2, 100, leftStream, rightBigtName, outFilter,
                     null, proj_list, 4);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         Map mapLeft = new Map();
         try {
             while ((mapLeft = inl.get_next()) != null) {
                 mapLeft.mapSetup();
-                mapLeft.print();
+                // mapLeft.print();
 
             }
         } catch (Exception e) {
