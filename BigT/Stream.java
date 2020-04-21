@@ -254,7 +254,7 @@ public class Stream implements GlobalConst{
    
 
     /** Reset everything and unpin all pages. */
-    private void reset() { 
+    public void reset() { 
 
         if (datapage != null) {
     

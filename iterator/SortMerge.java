@@ -134,15 +134,15 @@ public class SortMerge extends Iterator implements GlobalConst {
 		
 		if (!in1_sorted){
 			try {
-				p_i1 = new Sort(s1_sizes, am1, join_col_in1, order, sortFld1Len, amt_of_mem / 2, 1);
+				p_i1 = new Sort(s1_sizes, am1, join_col_in1, order, sortFld1Len, amt_of_mem / 2, 2);
 			}catch(Exception e){
 				throw new SortException (e, "Sort failed");
 			}
 		}
      
-		if (! in2_sorted){
+		if (!in2_sorted){
 			try {
-				p_i2 = new Sort(s2_sizes, am2, join_col_in2, order, sortFld2Len, amt_of_mem / 2, 1);
+				p_i2 = new Sort(s2_sizes, am2, join_col_in2, order, sortFld2Len, amt_of_mem / 2, 2);
 			}catch(Exception e){
 				throw new SortException (e, "Sort failed");
 			}

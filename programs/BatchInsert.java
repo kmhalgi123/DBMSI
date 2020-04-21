@@ -23,7 +23,7 @@ public class BatchInsert {
 
         new SystemDefs(fpath + "bigdata", 20000, 500, "Clock");
         boolean quit = false;
-        
+
         try {
             do {
                 System.out.print(">> ");
@@ -41,6 +41,8 @@ public class BatchInsert {
                     getCountDriver(words);
                 } else if (words[0].equals("rowsort")) {
                     rowSortDriver(words);
+                } else if (words[0].equals("rowjoin")) {
+                    rowJoinDriver(words);
                 } else {
                     System.out.println("Invalid input!");
                 }
@@ -52,6 +54,94 @@ public class BatchInsert {
         }
 
         sc.close();
+    }
+
+    public static void rowJoinDriver(String[] words) {
+        String leftbt = words[1];
+        String rightbt = words[2];
+        String colfilter = words[3];
+        String outbt = words[4];
+        int numbf = Integer.parseInt(words[5]);
+        try {
+            rowJoin(leftbt, rightbt, colfilter, outbt, numbf);
+        } catch (FileScanException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (MapUtilsException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvalidRelation e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JoinNewFailed e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JoinLowMemory e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (SortException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JoinsException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IndexException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvalidTupleSizeException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvalidTypeException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (PageNotReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (PredEvalException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (LowMemException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnknowAttrType e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnknownKeyTypeException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static void rowJoin(String leftbt, String rightbt, String colFilter, String outbt, int numbf)
+    throws JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException,
+    PageNotReadException, PredEvalException, LowMemException, UnknowAttrType, UnknownKeyTypeException,
+    Exception {
+        updateNumbuf(numbf);
+        FldSpec[] proj_list = new FldSpec[4];
+        RelSpec rel = new RelSpec(RelSpec.outer);
+        bigt oBigt = new bigt(outbt);
+        proj_list[0]= new FldSpec(rel, 1);
+        proj_list[1]= new FldSpec(rel, 2);
+        proj_list[2]= new FldSpec(rel, 3);
+        proj_list[3]= new FldSpec(rel, 4);
+        NestedLoopsJoins nestedLoopsJoins = new NestedLoopsJoins(colFilter, numbf, leftbt, rightbt, null, null, proj_list, 4);
+        while (true) {
+            Map m = nestedLoopsJoins.get_next();
+            if (m == null) {
+                bigt fs = new bigt("finalOutput");
+                fs.deleteBigt();
+                nestedLoopsJoins.close();
+                break;
+            }
+            m.print();
+            oBigt.mapInsert(m.getMapByteArray(), outbt, 1);
+        }
     }
 
     public static void batchInsertDriver(String words[]) throws IndexException, InvalidTypeException, InvalidTupleSizeException, UnknownIndexTypeException,
@@ -388,7 +478,9 @@ public class BatchInsert {
 
     public static void getCountDriver(String[] words) throws FileIOException, InvalidPageNumberException, DiskMgrException, IOException, GetFileEntryException,
     PinPageException, ConstructPageException, HFDiskMgrException, HFBufMgrException, HFException,
-    InvalidSlotNumberException {
+    InvalidSlotNumberException, NumberFormatException, HashOperationException, PageUnpinnedException,
+    PagePinnedException, PageNotFoundException, BufMgrException {
+        updateNumbuf(Integer.parseInt(words[1]));
         ArrayList<String> file_list = SystemDefs.JavabaseDB.get_all_files();
         for (String file : file_list) {
             if(file.startsWith("btree")) continue;
@@ -445,7 +537,9 @@ public class BatchInsert {
         updateNumbuf(numbf);
         f = new bigt(dbFileName);
         f.batchInsert(filepath, type, dbFileName, numbf);
-        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata5.csv 1 bd 500
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata2.csv 1 abd 500
+        // batchinsert /home/kaushal/DBMSI/Phase2/project2_testdata4.csv 1 bd 500
+        // rowjoin abd bd Camel abc 100
         return true;
     }
 
@@ -453,7 +547,6 @@ public class BatchInsert {
     throws LowMemException, Exception {
         updateNumbuf(numbuf);
         PCounter.initialize();
-        int c = 0;
         CondExpr[] indexSelect = new CondExpr[2];
         indexSelect[0] = null;
         indexSelect[1] = null;
@@ -487,7 +580,6 @@ public class BatchInsert {
                 break;
             }
             map.print();
-            c++;
         }
         try {
             // fileScan.close();

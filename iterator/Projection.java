@@ -3,6 +3,7 @@ package iterator;
 import BigT.*;
 import global.*;
 import java.io.*;
+import java.util.ArrayList;
 /**
  * Jtuple has the appropriate types.
  * Jtuple already has its setHdr called to setup its vital stas.
@@ -73,7 +74,30 @@ public class Projection
 				}
 			}
       	return;
-    }
+	}
+	
+	public static void Join(Map m1, Map m2, ArrayList<Map> output, FldSpec perm_mat[], String colname) throws IOException {
+		String rowop = m1.getRowLabel()+":"+m2.getRowLabel();
+		if(m1.getColumnLabel().equals(m2.getColumnLabel()) && m1.getColumnLabel().equals(colname)){
+			byte[] recbyte = new byte[116];
+			Map m = new Map(recbyte, 0);
+			m.setHdr(new short[]{32,32,32});
+			m.setRowLabel(rowop);
+			m.setColumnLabel(colname);
+			m.setTimeStamp(m2.getTimeStamp());
+			m.setValue(m2.getValue());
+			output.add(m);
+		}else {
+			byte[] recbyte = new byte[116];
+			Map m = new Map(recbyte, 0);
+			m.setHdr(new short[]{32,32,32});
+			m.setRowLabel(rowop);
+			m.setColumnLabel(m2.getColumnLabel()+"_right");
+			m.setTimeStamp(m2.getTimeStamp());
+			m.setValue(m2.getValue());
+			output.add(m);
+		}
+	}
   
   
   
