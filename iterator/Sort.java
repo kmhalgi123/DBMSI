@@ -98,7 +98,12 @@ public class Sort extends Iterator implements GlobalConst
       apage[0] = bufs[i];
 
       // need iobufs.java
+      try{
       i_buf[i].init(temp_files[i], apage, 1, tuple_size, n_tuples[i]);
+      }catch(Exception e){
+        System.out.println("Not minimum buffer pages to sort the tables!");
+        throw new Exception();
+      }
 
       cur_node = new pnode();
       cur_node.run_num = i;
@@ -1567,7 +1572,7 @@ public class Sort extends Iterator implements GlobalConst
 	      _am.close();
       }
       catch (Exception e) {
-	      throw new SortException(e, "Sort.java: error in closing iterator.");
+	      // throw new SortException(e, "Sort.java: error in closing iterator.");
       }
 
       if (useBM) {

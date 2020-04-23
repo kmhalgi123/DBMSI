@@ -4,12 +4,8 @@ package iterator;
 import BigT.*;
 import global.*;
 import bufmgr.*;
-import diskmgr.*;
 import index.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 /** 
  *
  *  This file contains an implementation of the nested loops join
@@ -40,20 +36,13 @@ public class NestedLoopsJoins  extends Iterator
   private   bigt  hf;
   private   Sort        s1;
   private   Sort        s2;
-  private   String      currentRow = "None",
-                        innerCuRow = "None";
-  private   boolean     isJoin = false, isInnerJonin = false, finalJoin = false;
-  private   int         maxTimeStamp = 0, maxTimeStampInner = 0;
+  private   String      currentRow = "None";
+  private   boolean     isJoin = false;
+  private   int         maxTimeStamp = 0;
   private   String      _colname, rightbtname, leftbtname;
   private   boolean     isFirstTime = true;
   private   bigt        btTopLeft, btTopRight, T3, T4, T5, finalOutput, leftb;
   private   FldSpec[]   proj_list;
-  private   Queue<Map> outer = new LinkedList<>();
-  private   Queue<Map> inner = new LinkedList<>();
-  private   Queue<Map> outer2 = new LinkedList<>();
-  private   Queue<Map> inner2 = new LinkedList<>();
-  private   Queue<Map> T5_2 = new LinkedList<>();
-  private   Queue<Map> output = new LinkedList<>();
 
   
   
@@ -86,7 +75,7 @@ public class NestedLoopsJoins  extends Iterator
    * @throws FileScanException
    * @throws InvalidTupleSizeException
    */
-  public NestedLoopsJoins(String colname, int amt_of_mem, String am1_s, String am2_s, CondExpr outFilter[],
+  public NestedLoopsJoins(String colname, int amt_of_mem, Stream leftStream, String am2_s, CondExpr outFilter[],
       CondExpr rightFilter[], FldSpec proj_list[], int n_out_flds)
       throws IOException, NestedLoopException, SortException, HFDiskMgrException, HFBufMgrException, HFException,
       InvalidSlotNumberException, FileScanException, MapUtilsException, InvalidRelation, InvalidTupleSizeException {
@@ -105,9 +94,10 @@ public class NestedLoopsJoins  extends Iterator
     finalOutput = new bigt("finalOutput");
     short[] t1_str_sizes = {32,32,32};
     short[] t2_str_sizes = {32,32,32};
-    leftbtname = am1_s;
     rightbtname = am2_s;
-    leftb = new bigt(am1_s);
+    leftbtname = leftStream.getBigtName();
+    leftb = new bigt(leftbtname);
+    // System.out.println(leftStream.getBigtName());
     outerx = leftb.openStream();
     this.proj_list = proj_list;
     innerx = new FileScan(am2_s, 0, t1_str_sizes, 4, proj_list, null);
@@ -139,6 +129,10 @@ public class NestedLoopsJoins  extends Iterator
   }
   
   /**  
+   * RowJoin: first takes the highest timestamp with given colname for all rows in both bigt.
+   * and then matches them accordingly.
+   * btTopLeft: outer table most recent map with column
+   * btTopRight: inner table most recent map with column
    *@return The joined tuple is returned
    *@exception IOException I/O errors
    *@exception JoinsException some join exception
@@ -183,6 +177,8 @@ public class NestedLoopsJoins  extends Iterator
       T3 = new bigt("T3");
       T4 = new bigt("T4");
       T5 = new bigt("T5");
+
+      // extracting table btTopLeft
 
       while(true){
         if(nextMap != null){
@@ -233,6 +229,8 @@ public class NestedLoopsJoins  extends Iterator
       isJoin = false;
       currentRow = "None";
       maxTimeStamp = 0;
+
+      // extracting table btTopRight
 
       while(true){
         if(nextMap != null){
@@ -288,20 +286,6 @@ public class NestedLoopsJoins  extends Iterator
       //assume that we have topleft and top right at this point
 
       // join top left, top right based on value 
-
-      System.out.println("Printing table Top left");
-      Boolean topleftdone = false;
-      Stream streamt3 = btTopLeft.openStream();
-      MID tlmid = new MID();
-      while (!topleftdone) {
-          Map mT3 = streamt3.getNext(tlmid);
-          if (mT3 == null) {
-              topleftdone = true;
-          } else {
-              mT3.mapSetup();
-              mT3.print();
-          }
-      }
       
       Stream topLeftStream = btTopLeft.openStream();
       Stream topRightStream = btTopRight.openStream();
@@ -506,9 +490,3 @@ public class NestedLoopsJoins  extends Iterator
     }
   }
 }
-
-
-
-
-
-

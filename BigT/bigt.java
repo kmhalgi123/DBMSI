@@ -291,9 +291,9 @@ public class bigt implements Filetype, GlobalConst {
 
         if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
             throw new HFException(null, "invalid PageId");
-
-        if (!(currentDataPage.available_space() >= recLen))
-            throw new SpaceNotAvailableException(null, "no available space");
+        // System.out.println(dpinfo.availspace);
+        // if (!(currentDataPage.available_space() >= recLen))
+        //     throw new SpaceNotAvailableException(null, "no available space");
 
         if (currentDataPage == null)
             throw new HFException(null, "can't find Data page");
@@ -579,8 +579,8 @@ public class bigt implements Filetype, GlobalConst {
         if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
             throw new HFException(null, "invalid PageId");
 
-        if (!(currentDataPage.available_space() >= recLen))
-            throw new SpaceNotAvailableException(null, "no available space");
+        // if (!(currentDataPage.available_space() >= recLen))
+        //     throw new SpaceNotAvailableException(null, "no available space");
 
         if (currentDataPage == null)
             throw new HFException(null, "can't find Data page");
@@ -633,6 +633,41 @@ public class bigt implements Filetype, GlobalConst {
         return hfpage;
     }
 
+    /**
+     * Batchinsert2 does the task of inserting whole batch rather than inserting the record one by one. It reduces time by large amount
+     * @param filepath: file path of records
+     * @param type type for insert
+     * @param dbfile bigt file
+     * @param numbf number of buffer pages
+     * @param btf batchinsert indexing
+     * @param btf2 actual btree
+     * @return
+     * @throws HFBufMgrException
+     * @throws InvalidSlotNumberException
+     * @throws HFException
+     * @throws HFDiskMgrException
+     * @throws IOException
+     * @throws GetFileEntryException
+     * @throws ConstructPageException
+     * @throws AddFileEntryException
+     * @throws KeyTooLongException
+     * @throws KeyNotMatchException
+     * @throws LeafInsertRecException
+     * @throws IndexInsertRecException
+     * @throws UnpinPageException
+     * @throws PinPageException
+     * @throws NodeNotMatchException
+     * @throws ConvertException
+     * @throws DeleteRecException
+     * @throws IndexSearchException
+     * @throws IteratorException
+     * @throws LeafDeleteException
+     * @throws InsertException
+     * @throws PageUnpinnedException
+     * @throws InvalidFrameNumberException
+     * @throws HashEntryNotFoundException
+     * @throws ReplacerException
+     */
     public boolean batchInsert2(String filepath, int type, String dbfile, int numbf, BTreeFile btf, BTreeFile btf2)
     throws HFBufMgrException, InvalidSlotNumberException, HFException, HFDiskMgrException, IOException,
     GetFileEntryException, ConstructPageException, AddFileEntryException, KeyTooLongException,
@@ -645,7 +680,11 @@ public class bigt implements Filetype, GlobalConst {
         // int recLen = recPtr.length;
         boolean found;
         FileInputStream fin;
-        fin = new FileInputStream(filepath);
+        try{
+            fin = new FileInputStream(filepath);
+        }catch(FileNotFoundException e){
+            throw new FileNotFoundException();
+        }
         DataInputStream din = new DataInputStream(fin);
         String line;
         BufferedReader bin = new BufferedReader(new InputStreamReader(din));
@@ -659,12 +698,12 @@ public class bigt implements Filetype, GlobalConst {
         DataPageInfo dpinfo = new DataPageInfo();
         MID currentDataPageRid = new MID();
         PageId currentDirPageId = new PageId(_firstDirPageId.pid);
-        ArrayList ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
+        ArrayList<Object> ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
         currentDirPageId = (PageId) ids.get(0);
         PageId currentDataPageId = (PageId) ids.get(1);
         currentDataPageRid = (MID) ids.get(2);
         pinPage(currentDirPageId, currentDirPage, false);
-        pinPage(dpinfo.pageId, currentDataPage, false);
+        pinPage(currentDataPageId, currentDataPage, false);
         while ((line = bin.readLine()) != null) {
             st = new StringTokenizer(line);
 
@@ -674,8 +713,8 @@ public class bigt implements Filetype, GlobalConst {
                 StringTokenizer sv = new StringTokenizer(token);
                 String rowLabel = sv.nextToken(",");
                 String columnLabel = sv.nextToken(",");
-                int timeStamp = Integer.parseInt(sv.nextToken(","));
                 String value = sv.nextToken(",");
+                int timeStamp = Integer.parseInt(sv.nextToken(","));
                 if(rowLabel.startsWith(UTF_BOM)){
                     rowLabel=rowLabel.substring(1).trim();
                 }
@@ -753,10 +792,10 @@ public class bigt implements Filetype, GlobalConst {
         
     }
 
-    public ArrayList getNextDataPageForRecords(PageId currentDirPageId, BigPage currentDirPage, BigPage currentDataPage, DataPageInfo dpinfo) throws HFBufMgrException,
+    public ArrayList<Object> getNextDataPageForRecords(PageId currentDirPageId, BigPage currentDirPage, BigPage currentDataPage, DataPageInfo dpinfo) throws HFBufMgrException,
     InvalidSlotNumberException, IOException, HFException, HFDiskMgrException {
         pinPage(currentDirPageId, currentDirPage, false);
-        ArrayList arrayList = new ArrayList<>();
+        ArrayList<Object> arrayList = new ArrayList<>();
         boolean found = false;
         Map amap;
         PageId nextDirPageId;
@@ -1111,10 +1150,8 @@ public class bigt implements Filetype, GlobalConst {
                 System.out.println("Checked the versions for "+c2+"th entry");
             }
             System.out.println("Deleting duplicate records "+ list.size());
-            // batchDelete(list);
-            // deleteMap(list.poll());
             batchDelete(list);
-            System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt() +"\nTotal Distinct Column Count: "+getColumnCnt());
+            System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt().size() +"\nTotal Distinct Column Count: "+getColumnCnt().size());
             
             btf.destroyFile();
             samplebigt.deleteBigt();
@@ -1122,7 +1159,6 @@ public class bigt implements Filetype, GlobalConst {
             bin.close();
 
         } catch (Exception e) {
-            // TODO: handle exception
             e.printStackTrace();
         }
         return true;
@@ -1332,7 +1368,7 @@ public class bigt implements Filetype, GlobalConst {
         return answer;
     }
 
-    public int getRowCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
+    public ArrayList<String> getRowCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
         PageId cuDirPageId = new PageId(_firstDirPageId.pid);
         BigPage cuDirPage = new BigPage();
         BigPage cuDataPage = new BigPage();
@@ -1381,10 +1417,10 @@ public class bigt implements Filetype, GlobalConst {
         // - if not yet end of heapfile: currentDirPageId valid
         
         
-        return rows.size();
+        return rows;
     }
 
-    public int getColumnCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
+    public ArrayList<String> getColumnCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
 
         PageId cuDirPageId = new PageId(_firstDirPageId.pid);
         BigPage cuDirPage = new BigPage();
@@ -1435,7 +1471,7 @@ public class bigt implements Filetype, GlobalConst {
         // - if not yet end of heapfile: currentDirPageId valid
         
         
-        return columnList.size();
+        return columnList;
     }
 
     public Map getMap(MID mid)
@@ -1593,6 +1629,15 @@ public class bigt implements Filetype, GlobalConst {
         return true;
     }
 
+    /**
+     * Batchdelete deletes an entire list of Maps in one go, rather than deleteMap which deletes map one by one, everytime traversing an entire bigt
+     * @param list list of MID to delete
+     * @return
+     * @throws HFBufMgrException
+     * @throws IOException
+     * @throws InvalidSlotNumberException
+     * @throws HFException
+     */
     public boolean batchDelete(PriorityQueue<MID> list) throws HFBufMgrException, IOException,
     InvalidSlotNumberException, HFException {
         BigPage currentDirPage = new BigPage();
@@ -1786,7 +1831,7 @@ public class bigt implements Filetype, GlobalConst {
                         unpinPage(currentDataPageId, true);
                     }
                     catch(Exception e) {
-                        throw new HFException (e, "heapfile,_find,unpinpage failed");
+                        // throw new HFException (e, "heapfile,_find,unpinpage failed");
                     }
             
                     currentDirPageId.pid = nextDirPageId.pid;
@@ -1851,6 +1896,10 @@ public class bigt implements Filetype, GlobalConst {
     public Stream openStream() throws InvalidTupleSizeException, IOException {
         Stream newsStream = new Stream(this);
         return newsStream;
+    }
+
+    public String getFileName() {
+        return _fileName;
     }
 
     private void pinPage(PageId pageno, Page page, boolean emptyPage)throws HFBufMgrException {
