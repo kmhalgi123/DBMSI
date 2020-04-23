@@ -1,5 +1,5 @@
 JDKPATH = /usr/lib/jvm/java-1.8.0-openjdk-amd64
-LIBPATH = /home/kaushal/DBMSI/dbmsi02
+LIBPATH = /home/kaushal/DBMSI/Project_Phase_2
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
@@ -9,16 +9,16 @@ PROGS = together
 
 all: $(PROGS)
 
-hf:Heapfile.java
+hf:bigt.java
 	$(JAVAC) bigt.java
 
-hp:HFPage.java
+hp:BigPage.java
 	$(JAVAC) BigPage.java
 
-tuple:Tuple.java
+tuple:Map.java
 	$(JAVAC) Map.java
 
-scan:Scan.java
+scan:Stream.java
 	$(JAVAC) Stream.java
 
 together:*.java

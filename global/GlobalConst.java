@@ -3,7 +3,7 @@ package global;
 public interface GlobalConst {
 
   public static final int MINIBASE_MAXARRSIZE = 50;
-  public static final int NUMBUF = 50;
+  public static final int NUMBUF = 100;
 
   /** Size of page. */
   public static final int MINIBASE_PAGESIZE = 1024;           // in bytes
@@ -17,7 +17,7 @@ public interface GlobalConst {
    * in Pages => the DBMS Manager tells the DB how much disk 
    * space is available for the database.
    */
-  public static final int MINIBASE_DB_SIZE = 10000;           
+  public static final int MINIBASE_DB_SIZE = 40000;           
   public static final int MINIBASE_MAX_TRANSACTIONS = 100;
   public static final int MINIBASE_DEFAULT_SHAREDMEM_SIZE = 1000;
   
@@ -28,6 +28,8 @@ public interface GlobalConst {
   public static final int MAXINDEXNAME = 40;
   public static final int MAXATTRNAME  = 15;    
   public static final int MAX_NAME = 50;
-
+  
   public static final int INVALID_PAGE = -1;
+
+  public static final String DBFILEPATH = "/tmp/bigdata";
 }

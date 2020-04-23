@@ -17,7 +17,7 @@ DOCFILES=bufmgr diskmgr global chainexception heap btree iterator index
 
 ##############  update the above for each assignment in making
 
-ASSIGN=/home/kaushal/DBMSI/dbmsi02
+ASSIGN=/home/kaushal/DBMSI/Project_Phase_2
 LIBDIR=$(ASSIGN)/lib
 KEY=$(ASSIGN)/key
 SRC=$(ASSIGN)/src
@@ -31,7 +31,7 @@ JAVADOC=javadoc -public -d $(PACKAGEINDEX)
 db: 
 	make -C global
 	make -C chainexception
-	##make -C btree
+	make -C btree
 	make -C bufmgr
 	make -C diskmgr
 	make -C BigT
@@ -42,7 +42,7 @@ doc:
 	$(JAVADOC) $(DOCFILES)
 
 test: 
-	cd programs; make batchinsert
+	cd programs; make dbmsi
 
 clean:
 	\rm -f $(CLASSPATH)/*.class *~ \#* core $(JARFILES) TRACE

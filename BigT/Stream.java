@@ -38,6 +38,7 @@ public class Stream implements GlobalConst{
     String val2 = "";
     /** The heapfile we are using. */
     private bigt  _hf;
+    private String _bigt_name;
 
     /** PageId of current directory page (which is itself an HFPage) */
     private PageId dirpageId = new PageId();
@@ -78,6 +79,7 @@ public class Stream implements GlobalConst{
      */
     public Stream(bigt hf) throws InvalidTupleSizeException, IOException
     {
+        _bigt_name = hf.getFileName();
         init(hf);
     }
 
@@ -254,7 +256,7 @@ public class Stream implements GlobalConst{
    
 
     /** Reset everything and unpin all pages. */
-    private void reset() { 
+    public void reset() { 
 
         if (datapage != null) {
     
@@ -418,237 +420,10 @@ public class Stream implements GlobalConst{
        */
     
     }
-    
-    // private boolean lastDataPage() throws HFBufMgrException, IOException {
-    //     DataPageInfo dpinfo;
-    //     Map        rectuple = null;
-    //     Boolean      bst;
-    //     BigPage cuDirPage = new BigPage();
-    //     PageId nextDirPageId = new PageId();
-    //     /** copy data about first directory page */
-    
-    //     dirpageId.pid = _hf._firstDirPageId.pid; 
-    //     nextDirPageId = dirpageId;
-    //     nextUserStatus = true;
 
-    //     // try {
-    //     //     dirpage  = new BigPage();
-    //     //     pinPage(dirpageId, (Page) dirpage, false);	   
-    //     // } catch (Exception e) {
-    //     //     //    System.err.println("SCAN Error, try pinpage: " + e);
-    //     //     e.printStackTrace();
-    //     // }
-    //     while(nextDirPageId.pid != INVALID_PAGE){
-    //         dirpage  = new BigPage();
-    //         pinPage(dirpageId, (Page) dirpage, false);
-    //         nextDirPageId = dirpage.getNextPage();
-    //         unpinPage(dirpageId, false);
-    //         if (nextDirPageId.pid != INVALID_PAGE) {
-    //             dirpageId.pid = nextDirPageId.pid;
-    //         }
-    //         // unpinPage(datapageId, false);
-    //     }
-
-    //     /** get first directory page and pin it */
-    //     // try {
-    //     //     dirpage  = new BigPage();
-    //     //     pinPage(dirpageId, (Page) dirpage, false);	   
-    //     // } catch (Exception e) {
-    //     //     //    System.err.println("SCAN Error, try pinpage: " + e);
-    //     //     e.printStackTrace();
-    //     // }
-
-    //     datapageRid = dirpage.firstMap();
-    //     MID tr = datapageRid;
-    //     while (tr != null){
-    //         tr = dirpage.nextMap(datapageRid);
-    //         if( tr != null)
-    //             datapageRid = tr;
-    //     }
-    //     if (datapageRid != null) {
-    //         /** there is a datapage record on the first directory page: */
-            
-    //         try {
-                
-    //             rectuple = dirpage.getMap(datapageRid);
-    //         } catch (Exception e) {
-    //             //	System.err.println("SCAN: Chain Error in Scan: " + e);
-    //             e.printStackTrace();
-    //         }		
-      			    
-    //         dpinfo = new DataPageInfo(rectuple);
-    //         datapageId.pid = dpinfo.pageId.pid;
-
-    //     }
-
-    //     datapage = null;
-
-    //     try{
-    //         prevDataPage();
-    //     }catch (Exception e){
-
-    //     }
-
-    //     return true;
-    // }
-
-    // private boolean prevDataPage() throws IOException {
-    //     DataPageInfo dpinfo;
-        
-    //     boolean nextDataPageStatus;
-    //     PageId prevDirPageId = new PageId();
-    //     Map rectuple = null;
-
-    //     if ((dirpage == null) && (datapageId.pid == INVALID_PAGE))
-    //         return false;
-
-    //     if (datapage == null) {
-    //         if (datapageId.pid == INVALID_PAGE) {
-    //             // heapfile is empty to begin with
-    
-    //             try{
-    //                 unpinPage(dirpageId, false);
-    //                 dirpage = null;
-    //             }
-    //             catch (Exception e){
-    //                 //  System.err.println("Scan: Chain Error: " + e);
-    //                 e.printStackTrace();
-    //             }
-        
-    //         } else {
-        
-    //             // pin first data page
-    //             try {
-    //                 datapage  = new BigPage();
-    //                 pinPage(datapageId, (Page) datapage, false);
-    //             }
-    //             catch (Exception e){
-    //                 e.printStackTrace();
-    //             }
-                
-    //             try {
-    //                 userrid = datapage.firstMap();
-    //                 MID rMid = userrid;
-    //                 while(rMid != null){
-    //                     rMid = datapage.nextMap(userrid);
-    //                     if (rMid != null) {
-    //                         userrid = rMid;    
-    //                     }
-    //                 }
-    //             }
-    //             catch (Exception e) {
-    //                 e.printStackTrace();
-    //             }
-        
-    //             return true;
-    //         }
-    //     }
-
-    //     try{
-    //         unpinPage(datapageId, false /* no dirty */);
-    //         datapage = null;
-    //     }
-    //         catch (Exception e){
-        
-    //     }
-
-    //     if (dirpage == null) {
-    //         return false;
-    //     }
-    
-    //     datapageRid = dirpage.prevMap(datapageRid);
-
-    //     if (datapageRid == null) return false;
-
-    //     else if (datapageRid.slotNo == INVALID_PAGE || datapageRid.pageNo.pid == INVALID_PAGE) {
-    //         nextDataPageStatus = false;
-    //         // we have read all datapage records on the current directory page
-            
-    //         // get next directory page
-    //         prevDirPageId = dirpage.getPrevPage();
-    
-    //         // unpin the current directory page
-    //         try {
-    //             unpinPage(dirpageId, false /* not dirty */);
-    //             dirpage = null;
-                
-    //             datapageId.pid = INVALID_PAGE;
-    //         } catch (Exception e) {
-	
-    //         }
-		    
-    //         if (prevDirPageId.pid == INVALID_PAGE)
-	//             return false;
-    //         else {
-    //             // ASSERTION:
-    //             // - nextDirPageId has correct id of the page which is to get
-                
-    //             dirpageId = prevDirPageId;
-                
-    //             try { 
-    //                 dirpage  = new BigPage();
-    //                 pinPage(dirpageId, (Page)dirpage, false);
-    //             } catch (Exception e){ }
-	
-    //             if (dirpage == null)
-    //                 return false;
-                
-    //             try {
-    //                 datapageRid = dirpage.firstMap();
-    //                 while (datapageRid != null) {
-    //                     datapageRid = dirpage.nextMap(datapageRid);
-    //                 }
-    //                 nextDataPageStatus = true;
-    //             } catch (Exception e){
-    //                 nextDataPageStatus = false;
-    //                 return false;
-	//             } 
-    //         }
-    //     }
-    //     try {
-    //         rectuple = dirpage.getMap(datapageRid);
-    //     }
-	
-    //     catch (Exception e) {
-    //         System.err.println("HeapFile: Error in Scan" + e);
-    //     }
-	
-    //     if (rectuple.size() != DataPageInfo.size)
-    //         return false;
-                        
-    //     dpinfo = new DataPageInfo(rectuple);
-    //     datapageId.pid = dpinfo.pageId.pid;
-	
-    //     try {
-    //         datapage = new BigPage();
-    //         pinPage(dpinfo.pageId, (Page) datapage, false);
-    //     } catch (Exception e) {
-    //         System.err.println("HeapFile: Error in Scan" + e);
-    //     }
-	
-     
-    //     // - directory page is pinned
-    //     // - datapage is pinned
-    //     // - this->dirpageId, this->dirpage correct
-    //     // - this->datapageId, this->datapage, this->datapageRid correct
-
-    //     userrid = datapage.firstMap();
-    //     MID rt = userrid;
-    //     while (rt != null){
-    //         rt = datapage.nextMap(userrid);
-    //         if(rt != null)
-    //             userrid = rt;
-    //     }
-        
-    //     if(userrid == null)
-    //     {
-    //         nextUserStatus = false;
-    //         return false;
-    //     }
-  
-    //     return true;
-
-    // }
+    public String getBigtName(){
+        return _bigt_name;
+    }
 
   /** Move to the next data page in the file and 
    * retrieve the next data page. 

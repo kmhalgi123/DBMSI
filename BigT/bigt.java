@@ -291,9 +291,9 @@ public class bigt implements Filetype, GlobalConst {
 
         if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
             throw new HFException(null, "invalid PageId");
-
-        if (!(currentDataPage.available_space() >= recLen))
-            throw new SpaceNotAvailableException(null, "no available space");
+        // System.out.println(dpinfo.availspace);
+        // if (!(currentDataPage.available_space() >= recLen))
+        //     throw new SpaceNotAvailableException(null, "no available space");
 
         if (currentDataPage == null)
             throw new HFException(null, "can't find Data page");
@@ -579,8 +579,8 @@ public class bigt implements Filetype, GlobalConst {
         if ((dpinfo.pageId).pid == INVALID_PAGE) // check error!
             throw new HFException(null, "invalid PageId");
 
-        if (!(currentDataPage.available_space() >= recLen))
-            throw new SpaceNotAvailableException(null, "no available space");
+        // if (!(currentDataPage.available_space() >= recLen))
+        //     throw new SpaceNotAvailableException(null, "no available space");
 
         if (currentDataPage == null)
             throw new HFException(null, "can't find Data page");
@@ -633,6 +633,41 @@ public class bigt implements Filetype, GlobalConst {
         return hfpage;
     }
 
+    /**
+     * Batchinsert2 does the task of inserting whole batch rather than inserting the record one by one. It reduces time by large amount
+     * @param filepath: file path of records
+     * @param type type for insert
+     * @param dbfile bigt file
+     * @param numbf number of buffer pages
+     * @param btf batchinsert indexing
+     * @param btf2 actual btree
+     * @return
+     * @throws HFBufMgrException
+     * @throws InvalidSlotNumberException
+     * @throws HFException
+     * @throws HFDiskMgrException
+     * @throws IOException
+     * @throws GetFileEntryException
+     * @throws ConstructPageException
+     * @throws AddFileEntryException
+     * @throws KeyTooLongException
+     * @throws KeyNotMatchException
+     * @throws LeafInsertRecException
+     * @throws IndexInsertRecException
+     * @throws UnpinPageException
+     * @throws PinPageException
+     * @throws NodeNotMatchException
+     * @throws ConvertException
+     * @throws DeleteRecException
+     * @throws IndexSearchException
+     * @throws IteratorException
+     * @throws LeafDeleteException
+     * @throws InsertException
+     * @throws PageUnpinnedException
+     * @throws InvalidFrameNumberException
+     * @throws HashEntryNotFoundException
+     * @throws ReplacerException
+     */
     public boolean batchInsert2(String filepath, int type, String dbfile, int numbf, BTreeFile btf, BTreeFile btf2)
     throws HFBufMgrException, InvalidSlotNumberException, HFException, HFDiskMgrException, IOException,
     GetFileEntryException, ConstructPageException, AddFileEntryException, KeyTooLongException,
@@ -645,7 +680,11 @@ public class bigt implements Filetype, GlobalConst {
         // int recLen = recPtr.length;
         boolean found;
         FileInputStream fin;
-        fin = new FileInputStream(filepath);
+        try{
+            fin = new FileInputStream(filepath);
+        }catch(FileNotFoundException e){
+            throw new FileNotFoundException();
+        }
         DataInputStream din = new DataInputStream(fin);
         String line;
         BufferedReader bin = new BufferedReader(new InputStreamReader(din));
@@ -659,12 +698,12 @@ public class bigt implements Filetype, GlobalConst {
         DataPageInfo dpinfo = new DataPageInfo();
         MID currentDataPageRid = new MID();
         PageId currentDirPageId = new PageId(_firstDirPageId.pid);
-        ArrayList ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
+        ArrayList<Object> ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
         currentDirPageId = (PageId) ids.get(0);
         PageId currentDataPageId = (PageId) ids.get(1);
         currentDataPageRid = (MID) ids.get(2);
         pinPage(currentDirPageId, currentDirPage, false);
-        pinPage(dpinfo.pageId, currentDataPage, false);
+        pinPage(currentDataPageId, currentDataPage, false);
         while ((line = bin.readLine()) != null) {
             st = new StringTokenizer(line);
 
@@ -674,8 +713,8 @@ public class bigt implements Filetype, GlobalConst {
                 StringTokenizer sv = new StringTokenizer(token);
                 String rowLabel = sv.nextToken(",");
                 String columnLabel = sv.nextToken(",");
-                int timeStamp = Integer.parseInt(sv.nextToken(","));
                 String value = sv.nextToken(",");
+                int timeStamp = Integer.parseInt(sv.nextToken(","));
                 if(rowLabel.startsWith(UTF_BOM)){
                     rowLabel=rowLabel.substring(1).trim();
                 }
@@ -753,10 +792,10 @@ public class bigt implements Filetype, GlobalConst {
         
     }
 
-    public ArrayList getNextDataPageForRecords(PageId currentDirPageId, BigPage currentDirPage, BigPage currentDataPage, DataPageInfo dpinfo) throws HFBufMgrException,
+    public ArrayList<Object> getNextDataPageForRecords(PageId currentDirPageId, BigPage currentDirPage, BigPage currentDataPage, DataPageInfo dpinfo) throws HFBufMgrException,
     InvalidSlotNumberException, IOException, HFException, HFDiskMgrException {
         pinPage(currentDirPageId, currentDirPage, false);
-        ArrayList arrayList = new ArrayList<>();
+        ArrayList<Object> arrayList = new ArrayList<>();
         boolean found = false;
         Map amap;
         PageId nextDirPageId;
@@ -930,6 +969,7 @@ public class bigt implements Filetype, GlobalConst {
     public boolean batchInsert(String filepath, int type, String dbfile, int numbf){
         String UTF_BOM = "\uFEFF";
         ArrayList<MID> toDelete = new ArrayList<>();
+        PriorityQueue<MID> list = new PriorityQueue<>(10, new MIDComparator());
         try{
             FileInputStream fin;
             fin = new FileInputStream(filepath);
@@ -1099,7 +1139,7 @@ public class bigt implements Filetype, GlobalConst {
                         MapMID mm  = pq.poll();
                         if(c3 > 2){
                             // btf.Delete(new StringKey(mm.getMap().getColumnLabel()+mm.getMap().getRowLabel()), mm.getMID());
-                            toDelete.add(mm.getMID());
+                            list.add(mm.getMID());
                         }
                         c3++;
                     }
@@ -1109,11 +1149,9 @@ public class bigt implements Filetype, GlobalConst {
                 c2++;
                 System.out.println("Checked the versions for "+c2+"th entry");
             }
-            // System.out.println("Deleting duplicate records "+ toDelete.size());
-            for (MID mid : toDelete) {
-                System.out.println(deleteMap(mid));
-            }
-            System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt() +"\nTotal Distinct Column Count: "+getColumnCnt());
+            System.out.println("Deleting duplicate records "+ list.size());
+            batchDelete(list);
+            System.out.println("Batchinsertion finished! transaction info: \nTotal Map count: "+getMapCnt()+ "\nTotal Distinct Row Count: "+ getRowCnt().size() +"\nTotal Distinct Column Count: "+getColumnCnt().size());
             
             btf.destroyFile();
             samplebigt.deleteBigt();
@@ -1121,7 +1159,6 @@ public class bigt implements Filetype, GlobalConst {
             bin.close();
 
         } catch (Exception e) {
-            // TODO: handle exception
             e.printStackTrace();
         }
         return true;
@@ -1166,8 +1203,7 @@ public class bigt implements Filetype, GlobalConst {
                 
                 DataPageInfo dpinfo = new DataPageInfo(amap);
                 try{
-                pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
-            
+                    pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
             
                     //check error;need unpin currentDirPage
                 } catch (Exception e) {
@@ -1332,7 +1368,7 @@ public class bigt implements Filetype, GlobalConst {
         return answer;
     }
 
-    public int getRowCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
+    public ArrayList<String> getRowCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
         PageId cuDirPageId = new PageId(_firstDirPageId.pid);
         BigPage cuDirPage = new BigPage();
         BigPage cuDataPage = new BigPage();
@@ -1381,10 +1417,10 @@ public class bigt implements Filetype, GlobalConst {
         // - if not yet end of heapfile: currentDirPageId valid
         
         
-        return rows.size();
+        return rows;
     }
 
-    public int getColumnCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
+    public ArrayList<String> getColumnCnt() throws HFBufMgrException, InvalidSlotNumberException, IOException {
 
         PageId cuDirPageId = new PageId(_firstDirPageId.pid);
         BigPage cuDirPage = new BigPage();
@@ -1435,7 +1471,7 @@ public class bigt implements Filetype, GlobalConst {
         // - if not yet end of heapfile: currentDirPageId valid
         
         
-        return columnList.size();
+        return columnList;
     }
 
     public Map getMap(MID mid)
@@ -1588,8 +1624,233 @@ public class bigt implements Filetype, GlobalConst {
                 
                 unpinPage(currentDirPageId, true /* == DIRTY */);
 	        }
-	    }
+        }
+        
         return true;
+    }
+
+    /**
+     * Batchdelete deletes an entire list of Maps in one go, rather than deleteMap which deletes map one by one, everytime traversing an entire bigt
+     * @param list list of MID to delete
+     * @return
+     * @throws HFBufMgrException
+     * @throws IOException
+     * @throws InvalidSlotNumberException
+     * @throws HFException
+     */
+    public boolean batchDelete(PriorityQueue<MID> list) throws HFBufMgrException, IOException,
+    InvalidSlotNumberException, HFException {
+        BigPage currentDirPage = new BigPage();
+        BigPage currentDataPage = new BigPage();
+        PageId currentDataPageId = new PageId();
+        PageId nextDirPageId = new PageId();
+        MID currentDataPageRid = new MID();
+        PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+        pinPage(currentDirPageId, currentDirPage, false);
+        MID thisPageRid = currentDirPage.firstMap();
+        DataPageInfo dpinfo = null;
+        Map amap = new Map();
+        listLoop: while(!list.isEmpty()){
+            MID toDelete = list.poll();
+            if(toDelete.pageNo.pid == currentDataPageId.pid){
+                currentDataPage.deleteMap(toDelete);
+                byte [] recbyt = new byte[4];
+                byte [] available_space_by = new byte[4];
+                System.arraycopy(amap.data, amap.getMapOffset(), available_space_by, 0, 4);
+                System.arraycopy(amap.data, amap.getMapOffset()+4, recbyt, 0, 4);
+                int recm = ConvertMap.getIntValue(0, recbyt);
+                int as = ConvertMap.getIntValue(0, available_space_by);
+                recm--;
+                if (recm >= 1) {
+                    as = currentDataPage.available_space();
+                    ConvertMap.setIntValue(as, amap.getMapOffset(), amap.data);
+                    ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
+                    continue listLoop;
+                }else {
+                    unpinPage(currentDataPageId, false /*undirty*/);
+                    freePage(currentDataPageId);
+
+                    currentDirPage.deleteMap(currentDataPageRid);
+                    currentDataPageRid = currentDirPage.firstMap();
+                    PageId pageId;
+                    pageId = currentDirPage.getPrevPage();
+                    if((currentDataPageRid == null)&&(pageId.pid != INVALID_PAGE)) {
+                        
+                        BigPage prevDirPage = new BigPage();
+                        pinPage(pageId, prevDirPage, false);
+        
+                        pageId = currentDirPage.getNextPage();
+                        prevDirPage.setNextPage(pageId);
+                        pageId = currentDirPage.getPrevPage();
+                        
+                        unpinPage(pageId, false);
+                        // set prevPage-pointer of next Page
+                        pageId = currentDirPage.getNextPage();
+                        if(pageId.pid != INVALID_PAGE) {
+                            BigPage nextDirPage = new BigPage();
+                            pageId = currentDirPage.getNextPage();
+                            pinPage(pageId, nextDirPage, false);
+                            
+                            //nextDirPage.openHFpage(apage);
+                            
+                            pageId = currentDirPage.getPrevPage();
+                            nextDirPage.setPrevPage(pageId);
+                            pageId = currentDirPage.getNextPage();
+                            unpinPage(pageId, true /* = DIRTY */);
+                        }
+                        // pageId = currentDirPage.getPrevPage();
+                        // delete empty directory page: (automatically unpinned?)
+                        unpinPage(currentDirPageId, false/*undirty*/);
+                        freePage(currentDirPageId);
+                        // pinPage(pageId, currentDirPage, false);
+                
+                    } else {
+                        // either (the directory page has at least one more datapagerecord
+                        // entry) or (it is the first directory page):
+                        // in both cases we do not delete it, but we have to unpin it:
+                        
+                        // unpinPage(currentDirPageId, true /* == DIRTY */);
+                    }
+                
+                }
+                if(list.size() == 0){
+                    try{
+                        unpinPage(currentDataPageId, false);
+                        unpinPage(currentDirPageId, false);
+                    }catch (Exception e){}
+                }
+                continue listLoop;
+
+            }
+            else{
+                while(currentDirPageId.pid != INVALID_PAGE){
+                    secondLoop: for(currentDataPageRid = thisPageRid; currentDataPageRid != null; currentDataPageRid = currentDirPage.nextMap(currentDataPageRid)){
+                        try{
+                            amap = currentDirPage.returnRecord(currentDataPageRid);
+                        }catch(InvalidSlotNumberException e){
+                            // e.printStackTrace();
+                            // System.out.println(currentDataPageRid.pageNo.pid + " "+currentDataPageRid.slotNo + " "+ currentDirPageId.pid);
+                            continue secondLoop;
+                        }
+                        // System.out.println("THIS");
+                        dpinfo = new DataPageInfo(amap);
+                        // System.out.println(dpinfo.pageId.pid);
+                        // currentDataPageId.pid = ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data);
+                        if(ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data) == toDelete.pageNo.pid){
+                            try{
+                                unpinPage(currentDataPageId, false);
+                            }catch (Exception e){
+                                // e.printStackTrace();
+                            }
+                            thisPageRid = currentDataPageRid;
+                            currentDataPageId.pid = ConvertMap.getIntValue(amap.getMapOffset()+8, amap.data);
+                            pinPage(currentDataPageId, currentDataPage, false);
+                            currentDataPage.deleteMap(toDelete);
+                            byte [] recbyt = new byte[4];
+                            byte [] available_space_by = new byte[4];
+                            System.arraycopy(amap.data, amap.getMapOffset(), available_space_by, 0, 4);
+                            System.arraycopy(amap.data, amap.getMapOffset()+4, recbyt, 0, 4);
+                            int recm = ConvertMap.getIntValue(0, recbyt);
+                            recm--;
+                            if (recm >= 1) {
+                                // more records remain on datapage so it still hangs around.  
+                                // we just need to modify its directory entry
+                                
+                                dpinfo.availspace = currentDataPage.available_space();
+ 
+                                // amap = currentDirPage.getMap(currentDataPageRid);
+                                ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
+                                ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
+                                amap = currentDirPage.returnRecord(currentDataPageRid);
+                                // System.out.println(Arrays.toString(amap.data));
+                                continue listLoop;
+                            }else {
+                                unpinPage(currentDataPageId, false /*undirty*/);
+                            
+                                freePage(currentDataPageId);
+                                
+                                // delete corresponding DataPageInfo-entry on the directory page:
+                                // currentDataPageRid points to datapage (from for loop above)
+                                
+                                currentDirPage.deleteMap(currentDataPageRid);
+                                currentDataPageRid = currentDirPage.firstMap();
+                                PageId pageId;
+                                pageId = currentDirPage.getPrevPage();
+                                if((currentDataPageRid == null)&&(pageId.pid != INVALID_PAGE)) {
+                                    // the directory-page is not the first directory page and it is empty:
+                                    // delete it
+                                    
+                                    // point previous page around deleted page:
+                                    
+                                    BigPage prevDirPage = new BigPage();
+                                    pinPage(pageId, prevDirPage, false);
+                    
+                                    pageId = currentDirPage.getNextPage();
+                                    prevDirPage.setNextPage(pageId);
+                                    pageId = currentDirPage.getPrevPage();
+                                    unpinPage(pageId, true /* = DIRTY */);
+                                    
+                                    
+                                    // set prevPage-pointer of next Page
+                                    pageId = currentDirPage.getNextPage();
+                                    if(pageId.pid != INVALID_PAGE) {
+                                        BigPage nextDirPage = new BigPage();
+                                        pageId = currentDirPage.getNextPage();
+                                        pinPage(pageId, nextDirPage, false);
+                                        
+                                        //nextDirPage.openHFpage(apage);
+                                        
+                                        pageId = currentDirPage.getPrevPage();
+                                        nextDirPage.setPrevPage(pageId);
+                                        pageId = currentDirPage.getNextPage();
+                                        unpinPage(pageId, true /* = DIRTY */);
+                                    }
+                                    // pageId = currentDirPage.getPrevPage();
+                                    // delete empty directory page: (automatically unpinned?)
+                                    unpinPage(currentDirPageId, false/*undirty*/);
+                                    freePage(currentDirPageId);
+                                    // pinPage(pageId, currentDirPage, false);
+                                    
+                            
+                                } else {
+                                    // either (the directory page has at least one more datapagerecord
+                                    // entry) or (it is the first directory page):
+                                    // in both cases we do not delete it, but we have to unpin it:
+                                    
+                                    // unpinPage(currentDirPageId, true /* == DIRTY */);
+                                }
+                            }
+                            continue listLoop;
+                        }
+                    }
+                    nextDirPageId = currentDirPage.getNextPage();
+                    Map ak = currentDirPage.returnRecord(currentDirPage.firstMap());
+                    // System.out.println(Arrays.toString(ak.data));
+                    try{
+                        unpinPage(currentDirPageId, true /*undirty*/);
+                        unpinPage(currentDataPageId, true);
+                    }
+                    catch(Exception e) {
+                        // throw new HFException (e, "heapfile,_find,unpinpage failed");
+                    }
+            
+                    currentDirPageId.pid = nextDirPageId.pid;
+                    if(currentDirPageId.pid != INVALID_PAGE) {
+                        pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+                        thisPageRid = currentDirPage.firstMap();
+                        if(currentDirPage == null)
+                            throw new HFException(null, "pinPage return null page");  
+                    }
+                }
+            }
+        }
+        try {
+            unpinPage(currentDataPageId, true);
+            unpinPage(currentDirPageId, true);
+        } catch (Exception e) {
+            //TODO: handle exception
+        }
+        return false;
     }
 
     public boolean updateMap(MID mid, Map newmap)
@@ -1635,6 +1896,10 @@ public class bigt implements Filetype, GlobalConst {
     public Stream openStream() throws InvalidTupleSizeException, IOException {
         Stream newsStream = new Stream(this);
         return newsStream;
+    }
+
+    public String getFileName() {
+        return _fileName;
     }
 
     private void pinPage(PageId pageno, Page page, boolean emptyPage)throws HFBufMgrException {
