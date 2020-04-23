@@ -46,7 +46,7 @@ public class PredEval
 		Map    value =   new Map();
 		short[]     str_size = new short[3];
 		AttrType[]  val_type = new AttrType[1];
-		
+		map1 = m1;
 		AttrType  comparison_type = new AttrType(AttrType.attrInteger);
 		int       comp_res;
 		boolean   op_res = false, row_res = false, col_res = true;
@@ -62,12 +62,12 @@ public class PredEval
 				fld1        = 1;
 				switch (temp_ptr.fldNo){
 					case 1:
-						str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
-						value.setHdr(str_size);
-						value.setRowLabel(temp_ptr.operand1.string);
-						map1 = value;
+						// str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
+						// value.setHdr(str_size);
+						// value.setRowLabel(temp_ptr.operand1.string);
+						// map1 = value;
 						str_size[0] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[1] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[2] = (short)(temp_ptr.operand2.string.length()+1 );
@@ -77,12 +77,12 @@ public class PredEval
 						comparison_type.attrType = AttrType.attrString;
 						break;
 					case 2:
-						str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
-						value.setHdr(str_size);
-						value.setColumnLabel(temp_ptr.operand1.string);
-						map1 = value;
+						// str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
+						// value.setHdr(str_size);
+						// value.setColumnLabel(temp_ptr.operand1.string);
+						// map1 = value;
 						str_size[0] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[1] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[2] = (short)(temp_ptr.operand2.string.length()+1 );
@@ -92,12 +92,12 @@ public class PredEval
 						comparison_type.attrType = AttrType.attrString;
 						break;
 					case 3:
-						str_size[0] = 1;
-						str_size[1] = 1;
-						str_size[2] = 1;
-						value.setHdr(str_size);
-						value.setTimeStamp(temp_ptr.operand1.integer);
-						map1 = value;
+						// str_size[0] = 1;
+						// str_size[1] = 1;
+						// str_size[2] = 1;
+						// value.setHdr(str_size);
+						// value.setTimeStamp(temp_ptr.operand1.integer);
+						// map1 = value;
 						str_size[0] = 1;
 						str_size[1] = 1;
 						str_size[2] = 1;
@@ -107,12 +107,12 @@ public class PredEval
 						comparison_type.attrType = AttrType.attrInteger;
 						break;
 					case 4:
-						str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
-						str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
-						value.setHdr(str_size);
-						value.setValue(temp_ptr.operand1.string);
-						map1 = value;
+						// str_size[0] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[1] = (short)(temp_ptr.operand1.string.length()+1 );
+						// str_size[2] = (short)(temp_ptr.operand1.string.length()+1 );
+						// value.setHdr(str_size);
+						// value.setValue(temp_ptr.operand1.string);
+						// map1 = value;
 						str_size[0] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[1] = (short)(temp_ptr.operand2.string.length()+1 );
 						str_size[2] = (short)(temp_ptr.operand2.string.length()+1 );

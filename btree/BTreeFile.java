@@ -161,23 +161,24 @@ public class BTreeFile extends IndexFile
   
   
   
-  /**  BTreeFile class
-   * an index file with given filename should already exist; this opens it.
-   *@param filename the B+ tree file name. Input parameter.
-   *@exception GetFileEntryException  can not ger the file from DB 
-   *@exception PinPageException  failed when pin a page
-   *@exception ConstructPageException   BT page constructor failed
-   */
-  public BTreeFile(String filename)
-    throws GetFileEntryException,  
-	   PinPageException, 
-	   ConstructPageException        
+  	/**
+	 * BTreeFile class an index file with given filename should already exist; this
+	 * opens it.
+	 * 
+	 * @param filename the B+ tree file name. Input parameter.
+	 * @exception GetFileEntryException  can not ger the file from DB
+	 * @exception PinPageException       failed when pin a page
+	 * @exception ConstructPageException BT page constructor failed
+	 * @throws IOException
+	 */
+	public BTreeFile(String filename)
+			throws GetFileEntryException, PinPageException, ConstructPageException, IOException 
     {      
       
       
       headerPageId=get_file_entry(filename);   
       
-      headerPage= new  BTreeHeaderPage( headerPageId);       
+	  headerPage= new  BTreeHeaderPage( headerPageId);
       dbname = new String(filename);
       /*
        *
@@ -224,7 +225,14 @@ public class BTreeFile extends IndexFile
 	  headerPage.setType(NodeType.BTHEAD);
 	}
       else {
+		
 	headerPage = new BTreeHeaderPage( headerPageId );  
+	// try{System.out.println("BTREE root pid "+headerPage.get_rootId().pid);}catch(Exception e){System.out.println("null");}
+	// headerPage.set_maxKeySize(keysize);
+	// headerPage.set_keyType((short)keytype); 
+	// headerPage.set_magic0(MAGIC0);
+	// headerPage.set_deleteFashion(delete_fashion);
+	// headerPage.setType(NodeType.BTHEAD);
       }
       
       dbname=new String(filename);
@@ -375,7 +383,7 @@ public class BTreeFile extends IndexFile
 	   
     {
       KeyDataEntry  newRootEntry;
-      
+    //   System.out.println(BT.getKeyLength(key)+" "+headerPage.get_maxKeySize());
       if (BT.getKeyLength(key) > headerPage.get_maxKeySize())
 	throw new KeyTooLongException(null,"");
       
@@ -511,7 +519,6 @@ public class BTreeFile extends IndexFile
 	  
 	  // the old root split and is now the left child of the new root
 	  newRootPage.setPrevPage(headerPage.get_rootId());
-	  
 	  unpinPage(newRootPageId, true /* = DIRTY */);
 	  
 	  updateHeader(newRootPageId);
@@ -524,7 +531,6 @@ public class BTreeFile extends IndexFile
 	  trace.writeBytes("DONE"+lineSep);
 	  trace.flush();
 	}
-      
       
       return;
     }

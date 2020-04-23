@@ -74,7 +74,7 @@ public abstract class pnodePQ
    * @exception TupleUtilsException error in tuple compare routines
    */
   public int pnodeCMP(pnode a, pnode b) throws IOException, UnknowAttrType, MapUtilsException {
-    int ans = MapUtils.CompareMapWithMap(a.map, b.map, fld_no);
+    int ans = MapUtils.customMapCompare(a.map, b.map, fld_no);
     return ans;
   }
 
