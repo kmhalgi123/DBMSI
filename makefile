@@ -17,7 +17,7 @@ DOCFILES=bufmgr diskmgr global chainexception heap btree iterator index
 
 ##############  update the above for each assignment in making
 
-ASSIGN=/home/kaushal/DBMSI/Project_Phase_2
+ASSIGN=/home/kaushal/DBMSI/Project_Phase_3
 LIBDIR=$(ASSIGN)/lib
 KEY=$(ASSIGN)/key
 SRC=$(ASSIGN)/src

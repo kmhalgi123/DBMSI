@@ -1,6 +1,28 @@
-# dbmsi2
-repository for group to work on
+# DBMSI Project Phase 3
 
-just created a BigT folder and created  empty java files with classes and methods as given in the project description.
-We should start by filling the empty classes and methods.
-Then we can understand what other files need to be changed.
+Database for bigtable which stores maps in specific format.
+
+## Installation
+
+Extract the Project_Phase_3 folder and change the libpath in all makefiles to the location on your system. Then run following commands in your folder.
+
+```bash
+make db
+```
+```bash
+make test
+```
+
+## Usage
+Try executing following commands!
+
+```bigt
+
+batchinsert <filename> <type> <tablename> <numbuf>
+mapinsert <rowlabel> <columnlabel> <value> <timestamp> <type> <tablename> <numbuf>
+query <tablename> <order_type> <rowfilter> <colfilter> <valuefilter> <numbuf>
+rowsort <inputbigt> <outputbigt> <colfilter> <order> <numbuf>
+rowjoin <leftbigt> <rightbigt> <colfilter> <outputbigt> <numbuf>
+getCounts <numbuf>
+```
+

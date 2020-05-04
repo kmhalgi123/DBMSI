@@ -699,6 +699,7 @@ public class bigt implements Filetype, GlobalConst {
         MID currentDataPageRid = new MID();
         PageId currentDirPageId = new PageId(_firstDirPageId.pid);
         ArrayList<Object> ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
+        dpinfo = (DataPageInfo) ids.get(4);
         currentDirPageId = (PageId) ids.get(0);
         PageId currentDataPageId = (PageId) ids.get(1);
         currentDataPageRid = (MID) ids.get(2);
@@ -750,6 +751,7 @@ public class bigt implements Filetype, GlobalConst {
                     ConvertMap.setIntValue(dpinfo.pageId.pid, amap.getMapOffset()+8, amap.data);
                     unpinPage(currentDirPageId, true);
                     ids = getNextDataPageForRecords(currentDirPageId, currentDirPage, currentDataPage, dpinfo);
+                    dpinfo = (DataPageInfo) ids.get(4);
                     currentDirPageId = (PageId) ids.get(0);
                     currentDataPageId = (PageId) ids.get(1);
                     currentDataPageRid = (MID) ids.get(2);
@@ -963,6 +965,7 @@ public class bigt implements Filetype, GlobalConst {
         arrayList.add(dpinfo.pageId);
         arrayList.add(currentDataPageRid);
         arrayList.add(isDirectory_changed);
+        arrayList.add(dpinfo);
         return arrayList;
     }
 
@@ -1663,13 +1666,14 @@ public class bigt implements Filetype, GlobalConst {
                 recm--;
                 if (recm >= 1) {
                     as = currentDataPage.available_space();
-                    ConvertMap.setIntValue(as, amap.getMapOffset(), amap.data);
+                    // ConvertMap.setIntValue(as, amap.getMapOffset(), amap.data);
                     ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
                     continue listLoop;
                 }else {
-                    unpinPage(currentDataPageId, false /*undirty*/);
-                    freePage(currentDataPageId);
-
+                    try{
+                        unpinPage(currentDataPageId, false /*undirty*/);
+                        freePage(currentDataPageId);
+                    }catch (Exception e){} 
                     currentDirPage.deleteMap(currentDataPageRid);
                     currentDataPageRid = currentDirPage.firstMap();
                     PageId pageId;
@@ -1759,7 +1763,7 @@ public class bigt implements Filetype, GlobalConst {
                                 dpinfo.availspace = currentDataPage.available_space();
  
                                 // amap = currentDirPage.getMap(currentDataPageRid);
-                                ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
+                                // ConvertMap.setIntValue(dpinfo.availspace, amap.getMapOffset(), amap.data);
                                 ConvertMap.setIntValue(recm, amap.getMapOffset()+4, amap.data);
                                 amap = currentDirPage.returnRecord(currentDataPageRid);
                                 // System.out.println(Arrays.toString(amap.data));

@@ -1,5 +1,5 @@
 JDKPATH = /usr/lib/jvm/java-1.8.0-openjdk-amd64
-LIBPATH = /home/kaushal/DBMSI/Project_Phase_2
+LIBPATH = /home/kaushal/DBMSI/Project_Phase_3
 CLASSPATH = $(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
